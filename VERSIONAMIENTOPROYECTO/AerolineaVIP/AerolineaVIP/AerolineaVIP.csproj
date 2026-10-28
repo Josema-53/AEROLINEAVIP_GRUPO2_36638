@@ -177,8 +177,116 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\Aeronave.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Aeropuerto.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asiento.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CheckIn.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Compra.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Comprobante.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DatosEmisor.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoAeronave.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoAsignacion.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoCheckIn.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoCompra.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoComprobante.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoItinerario.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoPago.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoReserva.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EstadoVuelo.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Frecuencia.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\IdentityModels.cs" />
+    <Compile Include="Models\Itinerario.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\ManageViewModels.cs" />
+    <Compile Include="Models\MarcaTarjeta.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\MetodoPago.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ModeloAeronave.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Model_AerolineasVIP.Context.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Model_AerolineasVIP.Context.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Model_AerolineasVIP.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Model_AerolineasVIP.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Model_AerolineasVIP.edmx</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Moneda.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Pago.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Pasajero.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Reserva.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ReservaPasajeroVuelo.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Ruta.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TipoComprobante.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TipoDocumentoIdentidad.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TramoItinerario.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Vuelo.cs">
+      <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
@@ -252,12 +360,29 @@
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Models\Model_AerolineasVIP.Context.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>Model_AerolineasVIP.edmx</DependentUpon>
+      <LastGenOutput>Model_AerolineasVIP.Context.cs</LastGenOutput>
+    </Content>
+    <Content Include="Models\Model_AerolineasVIP.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>Model_AerolineasVIP.edmx</DependentUpon>
+      <LastGenOutput>Model_AerolineasVIP.cs</LastGenOutput>
+    </Content>
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
     <Content Include="Scripts\bootstrap.esm.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <EntityDeploy Include="Models\Model_AerolineasVIP.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>Model_AerolineasVIP.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+    <Content Include="Models\Model_AerolineasVIP.edmx.diagram">
+      <DependentUpon>Model_AerolineasVIP.edmx</DependentUpon>
+    </Content>
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
