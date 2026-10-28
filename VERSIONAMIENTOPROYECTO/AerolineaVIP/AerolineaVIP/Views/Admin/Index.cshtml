@@ -1,0 +1,75 @@
+﻿@{
+    ViewBag.Title = "Administración";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Administración</h2>
+<p class="text-muted">Acceso a los módulos administrativos.</p>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h4>Administrar vuelos e itinerarios</h4>
+                <p class="text-muted">Programación de vuelos, frecuencias, rutas e itinerarios con escala.</p>
+                <ul>
+                    <li>@Html.ActionLink("Vuelos", "Index", "Vuelos")</li>
+                    <li>@Html.ActionLink("Frecuencias", "Index", "Frecuencias")</li>
+                    <li>@Html.ActionLink("Itinerarios", "Index", "Itinerarios")</li>
+                    <li>@Html.ActionLink("Tramos de itinerario", "Index", "TramoItinerarios")</li>
+                    <li>@Html.ActionLink("Rutas", "Index", "Rutas")</li>
+                    <li>@Html.ActionLink("Aeropuertos", "Index", "Aeropuertos")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h4>Gestionar aeronaves</h4>
+                <p class="text-muted">Flota, modelos y estado operativo de cada aeronave.</p>
+                <ul>
+                    <li>@Html.ActionLink("Aeronaves", "Index", "Aeronaves")</li>
+                    <li>@Html.ActionLink("Modelos de aeronave", "Index", "ModeloAeronaves")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h4>Usuarios, pasajeros y reservas</h4>
+                <p class="text-muted">Consulta y administración de pasajeros y reservas.</p>
+                <ul>
+                    <li>@Html.ActionLink("Pasajeros", "Index", "Pasajeros")</li>
+                    <li>@Html.ActionLink("Reservas", "Index", "Reservas")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h4>Consultas y reportes</h4>
+                <p class="text-muted">Ocupación por vuelo, reservas por estado y pagos simulados.</p>
+                <p>Próximamente.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h4>Configuración del pago simulado y comprobantes</h4>
+                <ul>
+                    <li>@Html.ActionLink("Métodos de pago", "Index", "MetodoPagos")</li>
+                    <li>@Html.ActionLink("Marcas de tarjeta", "Index", "MarcaTarjetas")</li>
+                    <li>@Html.ActionLink("Datos del emisor", "Index", "DatosEmisores")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
