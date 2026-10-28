@@ -290,6 +290,7 @@
     <Compile Include="Models\ReservaPasajeroVuelo.cs">
       <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\ReservasViewModels.cs" />
     <Compile Include="Models\Ruta.cs">
       <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
     </Compile>
@@ -518,6 +519,10 @@
     <Content Include="Views\Vuelos\Disponibilidad.cshtml" />
     <Content Include="Views\Vuelos\Resultados.cshtml" />
     <Content Include="Views\Shared\_MapaAsientos.cshtml" />
+    <Content Include="Views\Shared\_PasosCompra.cshtml" />
+    <Content Include="Views\Reservas\Confirmar.cshtml" />
+    <Content Include="Views\Reservas\Pasajeros.cshtml" />
+    <Content Include="Views\Reservas\SeleccionAsiento.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

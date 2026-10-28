@@ -1,0 +1,144 @@
+﻿@model AerolineaVIP.Models.PasajerosViewModel
+@{
+    ViewBag.Title = "Datos de los pasajeros";
+    var tipos = (List<AerolineaVIP.Models.TipoDocumentoIdentidad>)ViewBag.TiposDocumento;
+    var operacion = (AerolineaVIP.Models.OperacionReserva)Session["Operacion"];
+}
+
+@Html.Partial("_PasosCompra", 2)
+<h2>Datos de los pasajeros</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        @using (Html.BeginForm("Pasajeros", "Reservas", FormMethod.Post, new { id = "formPasajeros" }))
+        {
+            @Html.AntiForgeryToken()
+            <p class="text-muted">Los campos marcados con * son obligatorios.</p>
+            @Html.ValidationSummary(true, "", new { @class = "text-danger", role = "alert" })
+
+            for (int i = 0; i < Model.Pasajeros.Count; i++)
+            {
+                <div class="card mb-3">
+                    <div class="card-header"><strong>Pasajero @(i + 1)</strong> · Asiento @Model.AsientosPorPasajero[i]</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                @Html.LabelFor(m => m.Pasajeros[i].TipoDocumentoCodigo, new { @class = "form-label" }) *
+                                @Html.DropDownListFor(m => m.Pasajeros[i].TipoDocumentoCodigo, new SelectList(tipos, "Codigo", "Descripcion", Model.Pasajeros[i].TipoDocumentoCodigo), new { @class = "form-select tipo-documento", data_indice = i })
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                @Html.LabelFor(m => m.Pasajeros[i].NumeroDocumento, new { @class = "form-label" }) *
+                                @Html.TextBoxFor(m => m.Pasajeros[i].NumeroDocumento, new { @class = "form-control numero-documento", data_indice = i, maxlength = "20" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].NumeroDocumento, "", new { @class = "text-danger" })
+                                <span class="text-danger mensaje-cedula" data-indice="@i"></span>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                @Html.LabelFor(m => m.Pasajeros[i].Nombres, new { @class = "form-label" }) *
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Nombres, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Nombres, "", new { @class = "text-danger" })
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                @Html.LabelFor(m => m.Pasajeros[i].Apellidos, new { @class = "form-label" }) *
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Apellidos, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Apellidos, "", new { @class = "text-danger" })
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                @Html.LabelFor(m => m.Pasajeros[i].FechaNacimiento, new { @class = "form-label" }) (opcional)
+                                @Html.TextBoxFor(m => m.Pasajeros[i].FechaNacimiento, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", max = DateTime.Today.ToString("yyyy-MM-dd") })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].FechaNacimiento, "", new { @class = "text-danger" })
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                @Html.LabelFor(m => m.Pasajeros[i].Correo, new { @class = "form-label" }) (opcional)
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Correo, new { @class = "form-control", type = "email" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Correo, "", new { @class = "text-danger" })
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                @Html.LabelFor(m => m.Pasajeros[i].Telefono, new { @class = "form-label" }) (opcional)
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Telefono, new { @class = "form-control", maxlength = "20" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Telefono, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="mb-3">
+                <input type="submit" value="Continuar" class="btn btn-dark" />
+                @Html.ActionLink("Regresar a asientos", "SeleccionAsiento", "Reservas",
+                    new { vuelos = operacion.VuelosTexto, pasajeros = operacion.CantidadPasajeros },
+                    new { @class = "btn btn-outline-dark" })
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5>Resumen</h5>
+                <p class="mb-1"><strong>Ruta:</strong> @Model.RutaTexto</p>
+                <p class="mb-1"><strong>Fecha:</strong> @Model.Fecha.ToString("dd/MM/yyyy")</p>
+                <p class="mb-1"><strong>Tramos:</strong> @Model.Tramos</p>
+                <p class="mb-0"><strong>Asientos:</strong> @string.Join(" | ", Model.AsientosPorPasajero)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        // Validación de la cédula ecuatoriana (misma función del proyecto JS_FILTROS_SESSION)
+        function validarCedulaJS(cedula) {
+            if (!cedula || cedula.length !== 10 || isNaN(cedula)) {
+                return false;
+            }
+
+            var sum = 0;
+            for (var i = 0; i < 9; i++) {
+                var digit = parseInt(cedula[i]);
+
+                if (i % 2 === 0) {
+                    var multiplied = digit * 2;
+                    sum += (multiplied > 9) ? multiplied - 9 : multiplied;
+                } else {
+                    sum += digit;
+                }
+            }
+
+            var lastDigit = parseInt(cedula[9]);
+            var modulo = sum % 10;
+
+            if ((modulo === 0 && lastDigit === 0) || (10 - modulo === lastDigit)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        function revisarDocumento(indice) {
+            var tipo = $('.tipo-documento[data-indice=' + indice + ']').val();
+            var numero = $('.numero-documento[data-indice=' + indice + ']').val();
+            var $mensaje = $('.mensaje-cedula[data-indice=' + indice + ']');
+            if (tipo === 'CEDULA' && numero && !validarCedulaJS(numero)) {
+                $mensaje.text('La cédula debe tener 10 dígitos y ser válida.');
+                return false;
+            }
+            $mensaje.text('');
+            return true;
+        }
+
+        $(function () {
+            $('.numero-documento, .tipo-documento').on('change blur', function () {
+                revisarDocumento($(this).data('indice'));
+            });
+
+            $('#formPasajeros').on('submit', function (e) {
+                var correcto = true;
+                $('.numero-documento').each(function () {
+                    if (!revisarDocumento($(this).data('indice'))) { correcto = false; }
+                });
+                if (!correcto) { e.preventDefault(); }
+            });
+        });
+    </script>
+}

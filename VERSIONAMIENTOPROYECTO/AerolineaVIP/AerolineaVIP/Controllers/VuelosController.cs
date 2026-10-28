@@ -19,7 +19,8 @@ namespace AerolineaVIP.Controllers
         public ActionResult Index()
         {
             var query = db.Vuelo.Include("Aeronave").Include("EstadoVuelo")
-                .Include("Frecuencia.Ruta.Aeropuerto").Include("Frecuencia.Ruta.Aeropuerto1").AsQueryable();
+                .Include("Frecuencia.Ruta.Aeropuerto").Include("Frecuencia.Ruta.Aeropuerto1")
+                .Include("TramoItinerario.Itinerario").AsQueryable();
 
             // Filtros de búsqueda (fecha desde / hasta, ruta y estado)
             DateTime desde;

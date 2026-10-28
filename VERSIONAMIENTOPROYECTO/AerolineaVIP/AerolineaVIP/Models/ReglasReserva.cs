@@ -183,6 +183,59 @@ namespace AerolineaVIP.Models
                 .ToList();
         }
 
+        // Validación de la cédula ecuatoriana (mismo algoritmo que validarCedulaJS en JavaScript)
+        public static bool ValidarCedula(string cedula)
+        {
+            if (string.IsNullOrEmpty(cedula) || cedula.Length != 10 || !cedula.All(char.IsDigit))
+            {
+                return false;
+            }
+
+            int sum = 0;
+            for (int i = 0; i < 9; i++)
+            {
+                int digit = cedula[i] - '0';
+                if (i % 2 == 0)
+                {
+                    int multiplied = digit * 2;
+                    sum += (multiplied > 9) ? multiplied - 9 : multiplied;
+                }
+                else
+                {
+                    sum += digit;
+                }
+            }
+
+            int lastDigit = cedula[9] - '0';
+            int modulo = sum % 10;
+            return (modulo == 0 && lastDigit == 0) || (10 - modulo == lastDigit);
+        }
+
+        // Valida que una lista de vuelos forme un viaje válido: un vuelo que se vende solo (DP-09)
+        // o tramos contiguos con la conexión mínima (DP-10).
+        public static string ValidarSecuencia(List<Vuelo> vuelos)
+        {
+            if (vuelos.Count == 0)
+            {
+                return "No se encontró el vuelo seleccionado.";
+            }
+            if (vuelos.Count == 1 && !VentaIndividualPermitida(vuelos[0]))
+            {
+                return "Este tramo se vende únicamente como parte del itinerario a Galápagos.";
+            }
+            for (int i = 1; i < vuelos.Count; i++)
+            {
+                var anterior = vuelos[i - 1];
+                var siguiente = vuelos[i];
+                if (anterior.Frecuencia.Ruta.AeropuertoDestinoId != siguiente.Frecuencia.Ruta.AeropuertoOrigenId
+                    || (Salida(siguiente) - Llegada(anterior)).TotalMinutes < MinutosConexion)
+                {
+                    return "Los tramos seleccionados no forman un itinerario válido.";
+                }
+            }
+            return null;
+        }
+
         public static string NombreDia(int diaSemana)
         {
             string[] dias = { "", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo" };

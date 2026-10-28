@@ -1,0 +1,96 @@
+﻿@model AerolineaVIP.Models.ConfirmarReservaViewModel
+@{
+    ViewBag.Title = "Reserva de pasajes";
+}
+
+@Html.Partial("_PasosCompra", 3)
+<h2>Reserva de pasajes</h2>
+
+<h5>Itinerario</h5>
+<table class="table table-sm">
+    <tr><th>Tramo</th><th>Vuelo</th><th>Ruta</th><th>Fecha</th><th>Horario</th></tr>
+    @for (int t = 0; t < Model.Tramos.Count; t++)
+    {
+        var v = Model.Tramos[t];
+        <tr>
+            <td>@(t + 1)</td>
+            <td>@v.CodigoVuelo</td>
+            <td>@v.CiudadOrigen → @v.CiudadDestino</td>
+            <td>@v.Fecha.ToString("dd/MM/yyyy")</td>
+            <td>@v.HoraSalida.ToString("hh\\:mm") – @v.HoraLlegada.ToString("hh\\:mm")</td>
+        </tr>
+    }
+</table>
+
+<h5>Pasajeros y asientos</h5>
+<table class="table table-sm">
+    <tr>
+        <th>Pasajero</th>
+        <th>Documento</th>
+        @for (int t = 0; t < Model.Tramos.Count; t++)
+        {
+            <th>Asiento tramo @(t + 1)</th>
+        }
+        <th class="text-end">Importe (ejemplo)</th>
+    </tr>
+    @foreach (var fila in Model.Filas)
+    {
+        <tr>
+            <td>@fila.Nombre</td>
+            <td>@fila.Documento</td>
+            @foreach (var codigo in fila.Asientos)
+            {
+                <td>@codigo</td>
+            }
+            <td class="text-end">@fila.Importe.ToString("N2") USD</td>
+        </tr>
+    }
+    <tr>
+        <td colspan="@(2 + Model.Tramos.Count)"><strong>Total estimado</strong></td>
+        <td class="text-end"><strong>@Model.Total.ToString("N2") USD</strong></td>
+    </tr>
+</table>
+<p class="text-muted">Tarifa de ejemplo por pasajero y tramo (DP-04). Estado tras confirmar: <strong>Reserva pendiente de pago</strong>.</p>
+
+@using (Html.BeginForm("Confirmar", "Reservas", FormMethod.Post, new { id = "formConfirmar" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(false, "", new { @class = "text-danger", role = "alert" })
+
+    <div class="border rounded p-2 mb-2" style="max-height: 140px; overflow-y: auto;">
+        <small>
+            <strong>Condiciones de la reserva.</strong>
+            La reserva queda pendiente de pago y retiene los asientos durante 30 minutos, sin superar la hora de
+            salida del primer tramo. Si no se completa el pago en ese plazo, la reserva expira y los asientos se liberan.
+            Una reserva pendiente puede cancelarse antes de la salida. El pago es una simulación académica:
+            no se realizan cobros reales.
+        </small>
+    </div>
+    <div class="form-check mb-3">
+        @Html.CheckBoxFor(m => m.AceptaCondiciones, new { @class = "form-check-input" })
+        @Html.LabelFor(m => m.AceptaCondiciones, new { @class = "form-check-label" }) *
+    </div>
+
+    <button type="submit" name="accion" value="reservar" class="btn btn-outline-dark">Confirmar reserva</button>
+    <button type="submit" name="accion" value="pagar" class="btn btn-dark">Confirmar y pagar</button>
+    @Html.ActionLink("Volver a modificar", "Pasajeros", "Reservas", null, new { @class = "btn btn-link" })
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            // Evita envíos repetidos (RNP-10): el botón se deshabilita mientras se registra la reserva
+            $('#formConfirmar').on('submit', function (e) {
+                if (!$('#AceptaCondiciones').is(':checked')) {
+                    alert('Debe aceptar las condiciones de la reserva.');
+                    e.preventDefault();
+                    return;
+                }
+                var $form = $(this);
+                setTimeout(function () {
+                    $form.find('button[type=submit]').prop('disabled', true);
+                }, 0);
+            });
+        });
+    </script>
+}

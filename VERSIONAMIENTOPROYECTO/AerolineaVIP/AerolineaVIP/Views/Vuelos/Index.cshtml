@@ -49,6 +49,7 @@
         <th>Código</th>
         <th>Fecha</th>
         <th>Ruta</th>
+        <th>Itinerario</th>
         <th>Horario</th>
         <th>Aeronave</th>
         <th>Estado</th>
@@ -63,6 +64,12 @@
         <td>@AerolineaVIP.Models.ReglasReserva.CodigoVuelo(item.VueloId)</td>
         <td>@item.FechaOperacion.ToString("dd/MM/yyyy")</td>
         <td>@item.Frecuencia.Ruta.Aeropuerto1.CodigoIATA → @item.Frecuencia.Ruta.Aeropuerto.CodigoIATA</td>
+        <td>
+            @foreach (var tramo in item.TramoItinerario)
+            {
+                <small>@tramo.Itinerario.Nombre.Split('·')[0].Trim() (tramo @tramo.Orden)</small>
+            }
+        </td>
         <td>@item.Frecuencia.HoraSalida.ToString("hh\\:mm") – @item.Frecuencia.HoraLlegada.ToString("hh\\:mm")</td>
         <td>@(item.Aeronave != null ? item.Aeronave.Matricula : "Sin asignar")</td>
         <td>@item.EstadoVuelo.Descripcion</td>

@@ -1,0 +1,14 @@
+﻿@model int
+@{
+    string[] pasos = { "Asientos", "Pasajeros", "Reserva", "Pago" };
+}
+<nav aria-label="Pasos de la compra" class="mb-3">
+    <ol class="list-inline mb-0">
+        @for (int i = 0; i < pasos.Length; i++)
+        {
+            <li class="list-inline-item @(i + 1 == Model ? "fw-bold" : "text-muted")" @(i + 1 == Model ? "aria-current=step" : "")>
+                @(i + 1) @pasos[i]@(i < pasos.Length - 1 ? " ·" : "")
+            </li>
+        }
+    </ol>
+</nav>

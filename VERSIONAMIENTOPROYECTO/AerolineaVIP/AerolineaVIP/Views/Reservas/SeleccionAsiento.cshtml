@@ -1,0 +1,199 @@
+﻿@model AerolineaVIP.Models.SeleccionAsientoViewModel
+@{
+    ViewBag.Title = "Selección de asientos";
+}
+
+@Html.Partial("_PasosCompra", 1)
+<h2>Selección de asientos</h2>
+
+@if (Model.Mensaje != null)
+{
+    <div class="alert alert-warning" role="alert">@Model.Mensaje</div>
+}
+
+<div class="mb-3">
+    <span class="me-2">Pasajero a ubicar:</span>
+    @for (int p = 0; p < Model.CantidadPasajeros; p++)
+    {
+        <button type="button" class="btn btn-sm btn-outline-dark pasajero-btn" data-pasajero="@p">Pasajero @(p + 1)</button>
+    }
+</div>
+
+@if (Model.Tramos.Count > 1)
+{
+    <ul class="nav nav-tabs" role="tablist">
+        @for (int t = 0; t < Model.Tramos.Count; t++)
+        {
+            var tr = Model.Tramos[t].Vuelo;
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(t == 0 ? "active" : "")" data-bs-toggle="tab" data-bs-target="#tramo@(t)" type="button" role="tab">
+                    Tramo @(t + 1) · @tr.CiudadOrigen → @tr.CiudadDestino @tr.HoraSalida.ToString("hh\\:mm")
+                </button>
+            </li>
+        }
+    </ul>
+}
+
+<div class="tab-content border border-top-0 rounded-bottom p-3 mb-3">
+    @for (int t = 0; t < Model.Tramos.Count; t++)
+    {
+        var tramo = Model.Tramos[t];
+        var v = tramo.Vuelo;
+        <div class="tab-pane fade @(t == 0 ? "show active" : "")" id="tramo@(t)" role="tabpanel">
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Vuelo:</strong> @v.CodigoVuelo</div>
+                <div class="col-md-4"><strong>Fecha:</strong> @v.Fecha.ToString("dd/MM/yyyy")</div>
+                <div class="col-md-4"><strong>Salida – llegada:</strong> @v.HoraSalida.ToString("hh\\:mm") – @v.HoraLlegada.ToString("hh\\:mm")</div>
+                <div class="col-md-4"><strong>Aeronave:</strong> @v.Aeronave</div>
+                <div class="col-md-4"><strong>Capacidad máxima:</strong> @v.Capacidad asientos</div>
+                <div class="col-md-4"><strong>Disponibles:</strong> @v.Disponibles</div>
+            </div>
+            <div class="mapa-tramo" data-vuelo="@v.VueloId">
+                @Html.Partial("_MapaAsientos", new AerolineaVIP.Models.MapaAsientosViewModel { Asientos = tramo.Asientos, Seleccionable = true, MostrarLeyenda = (t == 0) })
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row">
+    <div class="col-md-7">
+        <h5>Resumen de la selección</h5>
+        <table class="table table-sm">
+            <tr>
+                <th>Pasajero</th>
+                @for (int t = 0; t < Model.Tramos.Count; t++)
+                {
+                    <th>Tramo @(t + 1)</th>
+                }
+            </tr>
+            @for (int p = 0; p < Model.CantidadPasajeros; p++)
+            {
+                <tr>
+                    <td>Pasajero @(p + 1)</td>
+                    @foreach (var tramo in Model.Tramos)
+                    {
+                        <td id="sel-@(p)-@(tramo.Vuelo.VueloId)">—</td>
+                    }
+                </tr>
+            }
+        </table>
+        <button type="button" id="btnQuitar" class="btn btn-link p-0">Quitar selección</button>
+    </div>
+    <div class="col-md-5">
+        <div class="alert alert-light border" role="status">
+            <strong>Información:</strong> Su selección es temporal: la reserva se registra al confirmar en el paso 3.
+        </div>
+        @using (Html.BeginForm("SeleccionAsiento", "Reservas", FormMethod.Post, new { id = "formSeleccion" }))
+        {
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="selecciones" id="selecciones" />
+            <input type="submit" id="btnContinuar" value="Continuar" class="btn btn-dark" disabled />
+            <a href="javascript:history.back()" class="btn btn-outline-dark">Regresar</a>
+        }
+        <p id="faltantes" class="text-muted small mt-2"></p>
+    </div>
+</div>
+
+<div id="anuncio" class="visually-hidden" aria-live="polite"></div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            var cantidad = @Model.CantidadPasajeros;
+            var vuelos = [@Model.VuelosIds];
+            var activo = 0;
+            var seleccion = {};
+            @foreach (var s in Model.Seleccionados)
+            {
+                @:seleccion['@(s.Pasajero)-@(s.VueloId)'] = { numero: @s.NumeroAsiento, codigo: '@s.Codigo' };
+            }
+
+            function vueloActual() {
+                var $mapa = $('.tab-pane.active .mapa-tramo');
+                return $mapa.length ? $mapa.data('vuelo') : vuelos[0];
+            }
+
+            function anunciar(texto) {
+                $('#anuncio').text(texto);
+            }
+
+            function cambiarActivo(p) {
+                activo = p;
+                $('.pasajero-btn').removeClass('btn-dark').addClass('btn-outline-dark');
+                $('.pasajero-btn[data-pasajero=' + p + ']').removeClass('btn-outline-dark').addClass('btn-dark');
+            }
+
+            function dibujar() {
+                $('.mapa-tramo .asiento-seleccionado').each(function () {
+                    $(this).removeClass('asiento-seleccionado').attr('aria-pressed', 'false');
+                    $(this).find('.estado-texto').text('Disponible');
+                });
+                var lista = [];
+                var faltan = 0;
+                for (var p = 0; p < cantidad; p++) {
+                    for (var i = 0; i < vuelos.length; i++) {
+                        var clave = p + '-' + vuelos[i];
+                        var s = seleccion[clave];
+                        if (s) {
+                            var $asiento = $('.mapa-tramo[data-vuelo=' + vuelos[i] + '] .asiento[data-numero=' + s.numero + ']');
+                            $asiento.addClass('asiento-seleccionado').attr('aria-pressed', 'true');
+                            $asiento.find('.estado-texto').text('Pasajero ' + (p + 1));
+                            $('#sel-' + clave).text(s.codigo);
+                            lista.push(p + '-' + vuelos[i] + '-' + s.numero);
+                        } else {
+                            $('#sel-' + clave).text('—');
+                            faltan++;
+                        }
+                    }
+                }
+                $('#selecciones').val(lista.join(','));
+                $('#btnContinuar').prop('disabled', faltan > 0);
+                $('#faltantes').text(faltan > 0 ? 'Faltan ' + faltan + ' asientos por asignar.' : '');
+            }
+
+            $('.pasajero-btn').on('click', function () {
+                cambiarActivo($(this).data('pasajero'));
+            });
+
+            // Solo los asientos verdes son botones habilitados; los rojos y morados están deshabilitados
+            $('.mapa-tramo').on('click', 'button.asiento-disponible', function () {
+                var vuelo = $(this).closest('.mapa-tramo').data('vuelo');
+                var numero = $(this).data('numero');
+                var codigo = $(this).data('codigo');
+                var clave = activo + '-' + vuelo;
+
+                for (var k in seleccion) {
+                    if (k.split('-')[1] == vuelo && seleccion[k].numero == numero) {
+                        if (k === clave) {
+                            delete seleccion[clave];
+                            anunciar('Asiento ' + codigo + ' liberado.');
+                            dibujar();
+                        } else {
+                            anunciar('El asiento ' + codigo + ' ya está elegido para otro pasajero.');
+                        }
+                        return;
+                    }
+                }
+
+                seleccion[clave] = { numero: numero, codigo: codigo };
+                anunciar('Asiento ' + codigo + ' seleccionado para Pasajero ' + (activo + 1));
+                for (var p = 0; p < cantidad; p++) {
+                    if (!seleccion[p + '-' + vuelo]) { cambiarActivo(p); break; }
+                }
+                dibujar();
+            });
+
+            $('#btnQuitar').on('click', function () {
+                delete seleccion[activo + '-' + vueloActual()];
+                dibujar();
+            });
+
+            $('#formSeleccion').on('submit', function () {
+                $('#btnContinuar').prop('disabled', true).val('Comprobando disponibilidad…');
+            });
+
+            cambiarActivo(0);
+            dibujar();
+        });
+    </script>
+}
