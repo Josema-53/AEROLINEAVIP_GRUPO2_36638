@@ -1,0 +1,69 @@
+﻿@model AerolineaVIP.Models.ConfirmacionViewModel
+@{
+    ViewBag.Title = "Confirmación";
+}
+
+<h2>Confirmación de compra o reserva</h2>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-info" role="alert">@TempData["Mensaje"]</div>
+}
+<div class="alert alert-@Model.TipoMensaje" role="alert">@Model.Mensaje</div>
+
+<div class="d-flex flex-wrap gap-3 mb-3">
+    <div class="border rounded p-2 text-center" style="min-width: 160px;">
+        <small class="text-muted d-block">Reserva</small>
+        <strong>@Model.EstadoReserva</strong>
+    </div>
+    <div class="border rounded p-2 text-center" style="min-width: 160px;">
+        <small class="text-muted d-block">Compra</small>
+        <strong>@Model.EstadoCompra</strong>
+    </div>
+    <div class="border rounded p-2 text-center" style="min-width: 160px;">
+        <small class="text-muted d-block">Pago simulado</small>
+        <strong>@Model.EstadoPago</strong>
+    </div>
+</div>
+
+<h5>Detalle · Reserva @Model.CodigoReserva</h5>
+<table class="table table-sm">
+    <tr><th>Tramo</th><th>Vuelo</th><th>Ruta</th><th>Fecha</th><th>Horario</th><th>Pasajero</th><th>Asiento</th></tr>
+    @foreach (var d in Model.Detalle)
+    {
+        <tr>
+            <td>@d.Tramo</td>
+            <td>@d.Vuelo</td>
+            <td>@d.Ruta</td>
+            <td>@d.Fecha.ToString("dd/MM/yyyy")</td>
+            <td>@d.Horario</td>
+            <td>@d.Pasajero</td>
+            <td>@d.Asiento</td>
+        </tr>
+    }
+</table>
+
+<table class="table table-sm" style="max-width: 520px;">
+    <tr><td>Total</td><td><strong>@Model.Total.ToString("N2") USD</strong></td></tr>
+    @if (Model.Metodo != null)
+    {
+        <tr><td>Método</td><td>@Model.Metodo</td></tr>
+    }
+    @if (Model.PuedePagar && Model.Expira != null)
+    {
+        <tr><td>Reserva retenida hasta</td><td>@Model.Expira.Value.ToString("dd/MM/yyyy HH:mm")</td></tr>
+    }
+</table>
+
+<div class="mb-3">
+    @Html.ActionLink("Ver reserva", "MisReservas", "Reservas", null, new { @class = "btn btn-outline-dark" })
+    @if (Model.CompraPagada)
+    {
+        @Html.ActionLink("Consultar comprobante", "Index", "Comprobantes", null, new { @class = "btn btn-dark" })
+    }
+    @if (Model.PuedePagar)
+    {
+        @Html.ActionLink(Model.EstadoPago == "RECHAZADO" ? "Reintentar pago" : "Pagar", "Pagar", "Compras", new { id = Model.ReservaId }, new { @class = "btn btn-dark" })
+    }
+    @Html.ActionLink("Volver al inicio", "Index", "Home", null, new { @class = "btn btn-link" })
+</div>

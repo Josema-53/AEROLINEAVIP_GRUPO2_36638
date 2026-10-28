@@ -209,6 +209,7 @@
     <Compile Include="Models\Compra.cs">
       <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\ComprasViewModels.cs" />
     <Compile Include="Models\Comprobante.cs">
       <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
     </Compile>
@@ -523,11 +524,12 @@
     <Content Include="Views\Reservas\Confirmar.cshtml" />
     <Content Include="Views\Reservas\Pasajeros.cshtml" />
     <Content Include="Views\Reservas\SeleccionAsiento.cshtml" />
+    <Content Include="Views\Compras\Confirmacion.cshtml" />
+    <Content Include="Views\Compras\Pagar.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Views\CheckIn\" />
-    <Folder Include="Views\Compras\" />
     <Folder Include="Views\Comprobantes\" />
   </ItemGroup>
   <ItemGroup>
