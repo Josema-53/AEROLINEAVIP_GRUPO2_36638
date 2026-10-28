@@ -43,7 +43,7 @@ namespace AerolineaVIP.Controllers
         public ActionResult Create()
         {
             ViewBag.ItinerarioId = new SelectList(db.Itinerario, "ItinerarioId", "Referencia");
-            ViewBag.VueloId = new SelectList(db.Vuelo, "VueloId", "EstadoVueloCodigo");
+            ViewBag.VueloId = new SelectList(TextoVuelos(), "VueloId", "Texto");
             return View();
         }
 
@@ -58,12 +58,20 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.TramoItinerario.Add(tramoItinerario);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
             ViewBag.ItinerarioId = new SelectList(db.Itinerario, "ItinerarioId", "Referencia", tramoItinerario.ItinerarioId);
-            ViewBag.VueloId = new SelectList(db.Vuelo, "VueloId", "EstadoVueloCodigo", tramoItinerario.VueloId);
+            ViewBag.VueloId = new SelectList(TextoVuelos(), "VueloId", "Texto", tramoItinerario.VueloId);
             return View(tramoItinerario);
         }
 
@@ -81,7 +89,7 @@ namespace AerolineaVIP.Controllers
                 return HttpNotFound();
             }
             ViewBag.ItinerarioId = new SelectList(db.Itinerario, "ItinerarioId", "Referencia", tramoItinerario.ItinerarioId);
-            ViewBag.VueloId = new SelectList(db.Vuelo, "VueloId", "EstadoVueloCodigo", tramoItinerario.VueloId);
+            ViewBag.VueloId = new SelectList(TextoVuelos(), "VueloId", "Texto", tramoItinerario.VueloId);
             return View(tramoItinerario);
         }
 
@@ -96,11 +104,19 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Entry(tramoItinerario).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
             ViewBag.ItinerarioId = new SelectList(db.Itinerario, "ItinerarioId", "Referencia", tramoItinerario.ItinerarioId);
-            ViewBag.VueloId = new SelectList(db.Vuelo, "VueloId", "EstadoVueloCodigo", tramoItinerario.VueloId);
+            ViewBag.VueloId = new SelectList(TextoVuelos(), "VueloId", "Texto", tramoItinerario.VueloId);
             return View(tramoItinerario);
         }
 
@@ -128,8 +144,28 @@ namespace AerolineaVIP.Controllers
         {
             TramoItinerario tramoItinerario = db.TramoItinerario.Find(id);
             db.TramoItinerario.Remove(tramoItinerario);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
+        }
+
+        private IEnumerable<object> TextoVuelos()
+        {
+            return ReglasReserva.VuelosConDetalle(db).Where(v => v.FechaOperacion >= DbFunctions.AddDays(DateTime.Today, -7)).ToList()
+                .OrderBy(v => ReglasReserva.Salida(v))
+                .Select(v => new
+                {
+                    v.VueloId,
+                    Texto = ReglasReserva.CodigoVuelo(v.VueloId) + " · " + v.FechaOperacion.ToString("dd/MM/yyyy") + " · "
+                        + v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA + " → " + v.Frecuencia.Ruta.Aeropuerto.CodigoIATA + " " + v.Frecuencia.HoraSalida.ToString("hh\\:mm")
+                });
         }
 
         protected override void Dispose(bool disposing)

@@ -1,0 +1,22 @@
+﻿@model string
+@{
+    var pestanas = new[]
+    {
+        new { Controlador = "Vuelos", Accion = "Index", Texto = "Vuelos por fecha" },
+        new { Controlador = "Frecuencias", Accion = "Index", Texto = "Frecuencias aprobadas" },
+        new { Controlador = "Itinerarios", Accion = "Index", Texto = "Itinerarios" },
+        new { Controlador = "TramoItinerarios", Accion = "Index", Texto = "Tramos" },
+        new { Controlador = "Rutas", Accion = "Index", Texto = "Rutas" },
+        new { Controlador = "Aeropuertos", Accion = "Index", Texto = "Aeropuertos" },
+        new { Controlador = "Vuelos", Accion = "Conflictos", Texto = "Conflictos de aeronave" }
+    };
+}
+<ul class="nav nav-tabs mb-3">
+    @foreach (var p in pestanas)
+    {
+        bool activa = p.Controlador + "/" + p.Accion == Model;
+        <li class="nav-item">
+            @Html.ActionLink(p.Texto, p.Accion, p.Controlador, null, new { @class = "nav-link" + (activa ? " active" : "") })
+        </li>
+    }
+</ul>

@@ -1,14 +1,14 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.MetodoPago>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Métodos de pago";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+<h2>Métodos de pago</h2>
 
 <p>
-    @Html.ActionLink("Create New", "Create")
+    @Html.ActionLink("Crear nuevo", "Create")
 </p>
 <table class="table">
     <tr>
@@ -30,9 +30,9 @@
             @Html.DisplayFor(modelItem => item.Activo)
         </td>
         <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.Codigo }) |
-            @Html.ActionLink("Details", "Details", new { id=item.Codigo }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.Codigo })
+            @Html.ActionLink("Editar", "Edit", new { id=item.Codigo }) |
+            @Html.ActionLink("Detalles", "Details", new { id=item.Codigo }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id=item.Codigo })
         </td>
     </tr>
 }

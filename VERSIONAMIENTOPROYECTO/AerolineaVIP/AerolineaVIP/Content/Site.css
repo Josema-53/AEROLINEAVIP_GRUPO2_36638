@@ -68,3 +68,18 @@ button.asiento:focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; 
     .cabina .cab-mando { grid-column: 1 / span 3; grid-row: 1; border-right: 0; border-bottom: 1px solid #ced4da; }
     .cabina .cab-pasillo { grid-column: 2; grid-row: 2 / span 5; writing-mode: vertical-rl; }
 }
+
+
+/* ===== Identidad visual Aerolínea VIP (azul marino y dorado) ===== */
+.navbar-vip { background-color: #14284B; border-bottom: 3px solid #C9A24B; }
+.navbar-vip .navbar-brand { color: #C9A24B; font-weight: 700; letter-spacing: 1px; }
+.navbar-vip .navbar-brand:hover { color: #e0c27a; }
+.btn-primary, .btn-dark { background-color: #14284B; border-color: #14284B; }
+.btn-primary:hover, .btn-dark:hover, .btn-primary:focus, .btn-dark:focus { background-color: #1f3a6b; border-color: #1f3a6b; }
+.btn-outline-dark { color: #14284B; border-color: #14284B; }
+.btn-outline-dark:hover { background-color: #14284B; color: #fff; }
+.portada { background: linear-gradient(135deg, #14284B 0%, #1f3a6b 100%); color: #fff; border-radius: 12px; padding: 32px 24px; margin-top: 16px; }
+.portada h1 { font-weight: 700; }
+.portada-etiqueta { color: #C9A24B; font-weight: 600; letter-spacing: 1px; font-size: .85rem; }
+.buscador { color: #212529; border: none; border-radius: 12px; }
+.destino { border-top: 4px solid #C9A24B; }

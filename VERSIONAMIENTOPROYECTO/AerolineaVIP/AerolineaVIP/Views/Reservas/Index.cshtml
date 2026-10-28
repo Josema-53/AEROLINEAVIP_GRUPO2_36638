@@ -1,58 +1,60 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.Reserva>
-
 @{
-    ViewBag.Title = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Reservas";
+    var usuarios = (Dictionary<string, string>)ViewBag.Usuarios;
 }
 
-<h2>Index</h2>
+@Html.Partial("_TabsGestion", "Reservas/Index")
+<h2>Reservas</h2>
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Código de reserva:</label>
+            <input type="text" name="codigo" value="@Request.QueryString["codigo"]" class="form-control" placeholder="RV00000000" />
+        </div>
+        <div class="col-md-4">
+            <label>Estado:</label>
+            @Html.DropDownList("estado", (SelectList)ViewBag.estado, "-- Todos --", new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="row mt-2" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">Limpiar Filtros</a>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No se encontraron registros.</div>
+}
 <table class="table">
     <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.CodigoReserva)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.UsuarioId)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.FechaCreacion)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.FechaExpiracion)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.EstadoReserva.Descripcion)
-        </th>
+        <th>Código</th>
+        <th>Titular</th>
+        <th>Creación</th>
+        <th>Expira</th>
+        <th>Reserva</th>
+        <th>Compra</th>
         <th></th>
     </tr>
-
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.CodigoReserva)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.UsuarioId)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.FechaCreacion)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.FechaExpiracion)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.EstadoReserva.Descripcion)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.ReservaId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.ReservaId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.ReservaId })
-        </td>
-    </tr>
-}
-
+    @foreach (var item in Model)
+    {
+        var compra = item.Compra.OrderByDescending(c => c.CompraId).FirstOrDefault();
+        <tr>
+            <td>@item.CodigoReserva</td>
+            <td>@(usuarios.ContainsKey(item.UsuarioId) ? usuarios[item.UsuarioId] : "—")</td>
+            <td>@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+            <td>@(item.FechaExpiracion != null && item.EstadoReservaCodigo == "PENDIENTE" ? item.FechaExpiracion.Value.ToString("dd/MM/yyyy HH:mm") : "—")</td>
+            <td>@item.EstadoReserva.Descripcion</td>
+            <td>@(compra != null ? compra.EstadoCompraCodigo : "Sin compra")</td>
+            <td>
+                @Html.ActionLink("Gestionar", "Gestionar", new { id = item.ReservaId }) |
+                @Html.ActionLink("Detalles", "Details", new { id = item.ReservaId })
+            </td>
+        </tr>
+    }
 </table>
+<p class="text-muted">Las reservas se crean desde el flujo de compra y se cancelan desde «Gestionar», para respetar las reglas de reserva, pago y liberación de asientos.</p>

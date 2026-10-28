@@ -1,14 +1,15 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.Frecuencia>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Frecuencias";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+@Html.Partial("_TabsVuelos", "Frecuencias/Index")
+<h2>Frecuencias</h2>
 
 <p>
-    @Html.ActionLink("Create New", "Create")
+    @Html.ActionLink("Crear nuevo", "Create")
 </p>
 <table class="table">
     <tr>
@@ -48,9 +49,9 @@
             @Html.DisplayFor(modelItem => item.Ruta.RutaId)
         </td>
         <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.FrecuenciaId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.FrecuenciaId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.FrecuenciaId })
+            @Html.ActionLink("Editar", "Edit", new { id=item.FrecuenciaId }) |
+            @Html.ActionLink("Detalles", "Details", new { id=item.FrecuenciaId }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id=item.FrecuenciaId })
         </td>
     </tr>
 }

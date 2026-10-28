@@ -1,43 +1,47 @@
 ﻿@model AerolineaVIP.Models.Aeronave
-
 @{
-    ViewBag.Title = "Details";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Aeronave " + Model.Matricula;
+    var asientos = (List<AerolineaVIP.Models.AsientoViewModel>)ViewBag.Asientos;
+    var vuelos = (List<AerolineaVIP.Models.Vuelo>)ViewBag.Vuelos;
 }
 
-<h2>Details</h2>
+<h2>Aeronave @Model.Matricula</h2>
 
-<div>
-    <h4>Aeronave</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.Matricula)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Matricula)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.EstadoAeronave.Descripcion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.EstadoAeronave.Descripcion)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.ModeloAeronave.Fabricante)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.ModeloAeronave.Fabricante)
-        </dd>
-
-    </dl>
+<div class="border rounded p-2 mb-3">
+    <div class="row">
+        <div class="col-md-4"><strong>Modelo:</strong> @Model.ModeloAeronave.Fabricante @Model.ModeloAeronave.Nombre</div>
+        <div class="col-md-4"><strong>Capacidad:</strong> @Model.ModeloAeronave.CapacidadAsientos asientos</div>
+        <div class="col-md-4"><strong>Estado operativo:</strong> @Model.EstadoAeronave.Descripcion</div>
+    </div>
 </div>
+
+<h4>Distribución de asientos (solo lectura)</h4>
+@Html.Partial("_MapaAsientos", new AerolineaVIP.Models.MapaAsientosViewModel { Asientos = asientos, Seleccionable = false, MostrarLeyenda = false })
+
+<h4 class="mt-4">Próximas asignaciones</h4>
+@if (vuelos.Count == 0)
+{
+    <p class="text-muted">No tiene vuelos asignados próximamente.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <tr><th>Vuelo</th><th>Fecha</th><th>Ruta</th><th>Horario</th><th>Estado</th><th></th></tr>
+        @foreach (var v in vuelos)
+        {
+            <tr>
+                <td>@AerolineaVIP.Models.ReglasReserva.CodigoVuelo(v.VueloId)</td>
+                <td>@v.FechaOperacion.ToString("dd/MM/yyyy")</td>
+                <td>@v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA → @v.Frecuencia.Ruta.Aeropuerto.CodigoIATA</td>
+                <td>@v.Frecuencia.HoraSalida.ToString("hh\\:mm") – @v.Frecuencia.HoraLlegada.ToString("hh\\:mm")</td>
+                <td>@v.EstadoVueloCodigo</td>
+                <td>@Html.ActionLink("Ver vuelo", "Details", "Vuelos", new { id = v.VueloId }, null)</td>
+            </tr>
+        }
+    </table>
+}
+
 <p>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.AeronaveId }) |
-    @Html.ActionLink("Back to List", "Index")
+    @Html.ActionLink("Modificar estado", "Edit", new { id = Model.AeronaveId }, new { @class = "btn btn-outline-dark" })
+    @Html.ActionLink("Volver a la lista", "Index", null, new { @class = "btn btn-outline-secondary" })
 </p>

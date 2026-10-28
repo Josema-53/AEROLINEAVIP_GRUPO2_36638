@@ -1,14 +1,14 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.MarcaTarjeta>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Marcas de tarjeta";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+<h2>Marcas de tarjeta</h2>
 
 <p>
-    @Html.ActionLink("Create New", "Create")
+    @Html.ActionLink("Crear nuevo", "Create")
 </p>
 <table class="table">
     <tr>
@@ -54,9 +54,9 @@
             @Html.DisplayFor(modelItem => item.Activa)
         </td>
         <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.Codigo }) |
-            @Html.ActionLink("Details", "Details", new { id=item.Codigo }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.Codigo })
+            @Html.ActionLink("Editar", "Edit", new { id=item.Codigo }) |
+            @Html.ActionLink("Detalles", "Details", new { id=item.Codigo }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id=item.Codigo })
         </td>
     </tr>
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -88,7 +89,7 @@ namespace AerolineaVIP.Controllers
         {
             ViewBag.AeronaveId = new SelectList(db.Aeronave, "AeronaveId", "Matricula");
             ViewBag.EstadoVueloCodigo = new SelectList(db.EstadoVuelo, "Codigo", "Descripcion");
-            ViewBag.FrecuenciaId = new SelectList(db.Frecuencia, "FrecuenciaId", "FrecuenciaId");
+            ViewBag.FrecuenciaId = new SelectList(TextoFrecuencias(), "FrecuenciaId", "Texto");
             return View();
         }
 
@@ -100,16 +101,29 @@ namespace AerolineaVIP.Controllers
         [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "VueloId,FrecuenciaId,FechaOperacion,AeronaveId,EstadoVueloCodigo")] Vuelo vuelo)
         {
+            string conflicto = ValidarAsignacion(vuelo);
+            if (conflicto != null)
+            {
+                ModelState.AddModelError("AeronaveId", conflicto);
+            }
             if (ModelState.IsValid)
             {
                 db.Vuelo.Add(vuelo);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
             ViewBag.AeronaveId = new SelectList(db.Aeronave, "AeronaveId", "Matricula", vuelo.AeronaveId);
             ViewBag.EstadoVueloCodigo = new SelectList(db.EstadoVuelo, "Codigo", "Descripcion", vuelo.EstadoVueloCodigo);
-            ViewBag.FrecuenciaId = new SelectList(db.Frecuencia, "FrecuenciaId", "FrecuenciaId", vuelo.FrecuenciaId);
+            ViewBag.FrecuenciaId = new SelectList(TextoFrecuencias(), "FrecuenciaId", "Texto", vuelo.FrecuenciaId);
             return View(vuelo);
         }
 
@@ -128,7 +142,7 @@ namespace AerolineaVIP.Controllers
             }
             ViewBag.AeronaveId = new SelectList(db.Aeronave, "AeronaveId", "Matricula", vuelo.AeronaveId);
             ViewBag.EstadoVueloCodigo = new SelectList(db.EstadoVuelo, "Codigo", "Descripcion", vuelo.EstadoVueloCodigo);
-            ViewBag.FrecuenciaId = new SelectList(db.Frecuencia, "FrecuenciaId", "FrecuenciaId", vuelo.FrecuenciaId);
+            ViewBag.FrecuenciaId = new SelectList(TextoFrecuencias(), "FrecuenciaId", "Texto", vuelo.FrecuenciaId);
             return View(vuelo);
         }
 
@@ -140,15 +154,28 @@ namespace AerolineaVIP.Controllers
         [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "VueloId,FrecuenciaId,FechaOperacion,AeronaveId,EstadoVueloCodigo")] Vuelo vuelo)
         {
+            string conflicto = ValidarAsignacion(vuelo);
+            if (conflicto != null)
+            {
+                ModelState.AddModelError("AeronaveId", conflicto);
+            }
             if (ModelState.IsValid)
             {
                 db.Entry(vuelo).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
             ViewBag.AeronaveId = new SelectList(db.Aeronave, "AeronaveId", "Matricula", vuelo.AeronaveId);
             ViewBag.EstadoVueloCodigo = new SelectList(db.EstadoVuelo, "Codigo", "Descripcion", vuelo.EstadoVueloCodigo);
-            ViewBag.FrecuenciaId = new SelectList(db.Frecuencia, "FrecuenciaId", "FrecuenciaId", vuelo.FrecuenciaId);
+            ViewBag.FrecuenciaId = new SelectList(TextoFrecuencias(), "FrecuenciaId", "Texto", vuelo.FrecuenciaId);
             return View(vuelo);
         }
 
@@ -176,7 +203,15 @@ namespace AerolineaVIP.Controllers
         {
             Vuelo vuelo = db.Vuelo.Find(id);
             db.Vuelo.Remove(vuelo);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
         }
 
@@ -489,6 +524,146 @@ namespace AerolineaVIP.Controllers
                     + string.Join(", ", diasRuta.Select(d => ReglasReserva.NombreDia(d))) + ". Elija otra fecha.";
             }
             return "No hay vuelos para los criterios seleccionados.";
+        }
+
+        // ===================================================================================
+        // PANTALLA 18: generación de vuelos, conflictos de aeronave y validación de asignaciones
+        // ===================================================================================
+
+        // POST: Vuelos/Generar  (ejecuta usp_GenerarVuelos para el rango; solo días autorizados)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
+        public ActionResult Generar(DateTime? desdeGenerar, DateTime? hastaGenerar)
+        {
+            if (desdeGenerar == null || hastaGenerar == null || hastaGenerar < desdeGenerar)
+            {
+                TempData["Error"] = "Indique un rango de fechas válido para generar vuelos.";
+                return RedirectToAction("Index");
+            }
+            if ((hastaGenerar.Value - desdeGenerar.Value).TotalDays > 365)
+            {
+                TempData["Error"] = "El rango no puede superar 366 días.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                int antes = db.Vuelo.Count();
+                db.Database.ExecuteSqlCommand("EXEC dbo.usp_GenerarVuelos @FechaInicio, @FechaFin",
+                    new SqlParameter("@FechaInicio", desdeGenerar.Value.Date),
+                    new SqlParameter("@FechaFin", hastaGenerar.Value.Date));
+                int generados = db.Vuelo.Count() - antes;
+                TempData["Mensaje"] = generados == 0
+                    ? "No se generaron vuelos nuevos: ya existían para ese rango."
+                    : "Se generaron " + generados + " vuelos. Asígneles una aeronave para poder comercializarlos.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "No se pudieron generar los vuelos: " + ex.GetBaseException().Message;
+            }
+            return RedirectToAction("Index", new { desde = desdeGenerar.Value.ToString("yyyy-MM-dd"), hasta = hastaGenerar.Value.ToString("yyyy-MM-dd") });
+        }
+
+        // GET: Vuelos/Conflictos  (aeronaves con intervalos operativos incompatibles, DP-03)
+        [Authorize(Roles = "SuperUsuario,Administrador")]
+        public ActionResult Conflictos()
+        {
+            var desde = DateTime.Today.AddDays(-7);
+            var vuelos = ReglasReserva.VuelosConDetalle(db)
+                .Where(v => v.AeronaveId != null && v.EstadoVueloCodigo != "CANCELADO" && v.FechaOperacion >= desde)
+                .ToList();
+
+            var conflictos = new List<string[]>();
+            foreach (var grupo in vuelos.GroupBy(v => v.AeronaveId))
+            {
+                var lista = grupo.OrderBy(v => ReglasReserva.Salida(v)).ToList();
+                for (int i = 0; i < lista.Count; i++)
+                {
+                    for (int j = i + 1; j < lista.Count; j++)
+                    {
+                        if (IntervalosIncompatibles(lista[i], lista[j]))
+                        {
+                            conflictos.Add(new[]
+                            {
+                                lista[i].Aeronave.Matricula,
+                                DescribirVuelo(lista[i]),
+                                DescribirVuelo(lista[j])
+                            });
+                        }
+                    }
+                }
+            }
+            ViewBag.Margen = MinutosMargen;
+            return View(conflictos);
+        }
+
+        // DP-03: margen de preparación antes de la salida y después de la llegada (minutos)
+        private const int MinutosMargen = 30;
+
+        private bool IntervalosIncompatibles(Vuelo a, Vuelo b)
+        {
+            var inicioA = ReglasReserva.Salida(a).AddMinutes(-MinutosMargen);
+            var finA = ReglasReserva.Llegada(a).AddMinutes(MinutosMargen);
+            var inicioB = ReglasReserva.Salida(b).AddMinutes(-MinutosMargen);
+            var finB = ReglasReserva.Llegada(b).AddMinutes(MinutosMargen);
+            return inicioA < finB && inicioB < finA;   // RG-03 (fin exclusivo)
+        }
+
+        private string DescribirVuelo(Vuelo v)
+        {
+            return ReglasReserva.CodigoVuelo(v.VueloId) + " · " + v.FechaOperacion.ToString("dd/MM/yyyy") + " · "
+                + v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA + " → " + v.Frecuencia.Ruta.Aeropuerto.CodigoIATA + " "
+                + v.Frecuencia.HoraSalida.ToString("hh\\:mm") + "–" + v.Frecuencia.HoraLlegada.ToString("hh\\:mm");
+        }
+
+        // Validación del servicio al asignar una aeronave (complementa el trigger trg_Vuelo_Validar)
+        private string ValidarAsignacion(Vuelo vuelo)
+        {
+            if (vuelo.AeronaveId == null || vuelo.EstadoVueloCodigo == "CANCELADO")
+            {
+                return null;
+            }
+            var frecuencia = db.Frecuencia.Find(vuelo.FrecuenciaId);
+            if (frecuencia == null)
+            {
+                return null;
+            }
+            var propuesto = new Vuelo { VueloId = vuelo.VueloId, FechaOperacion = vuelo.FechaOperacion, Frecuencia = frecuencia };
+
+            var dia = vuelo.FechaOperacion.Date;
+            var anterior = dia.AddDays(-1);
+            var siguiente = dia.AddDays(1);
+            int aeronaveId = vuelo.AeronaveId.Value;
+            int vueloId = vuelo.VueloId;
+            var otros = db.Vuelo.Include("Frecuencia").Include("Aeronave")
+                .Where(v => v.AeronaveId == aeronaveId && v.VueloId != vueloId && v.EstadoVueloCodigo != "CANCELADO"
+                            && v.FechaOperacion >= anterior && v.FechaOperacion <= siguiente)
+                .AsNoTracking()
+                .ToList();
+
+            foreach (var otro in otros)
+            {
+                if (IntervalosIncompatibles(propuesto, otro))
+                {
+                    return "La aeronave " + otro.Aeronave.Matricula + " ya tiene el vuelo " + ReglasReserva.CodigoVuelo(otro.VueloId)
+                        + " entre " + otro.Frecuencia.HoraSalida.ToString("hh\\:mm") + " y " + otro.Frecuencia.HoraLlegada.ToString("hh\\:mm")
+                        + " (con " + MinutosMargen + " minutos de preparación). No se guardó la asignación.";
+                }
+            }
+            return null;
+        }
+
+        private IEnumerable<object> TextoFrecuencias()
+        {
+            string[] dias = { "", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
+            return db.Frecuencia.Include("Ruta.Aeropuerto").Include("Ruta.Aeropuerto1").ToList()
+                .OrderBy(f => f.DiaSemana).ThenBy(f => f.HoraSalida)
+                .Select(f => new
+                {
+                    f.FrecuenciaId,
+                    Texto = dias[f.DiaSemana] + " " + f.HoraSalida.ToString("hh\\:mm") + " · " + f.Ruta.Aeropuerto1.CodigoIATA + " → " + f.Ruta.Aeropuerto.CodigoIATA
+                });
         }
 
         protected override void Dispose(bool disposing)

@@ -57,8 +57,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Itinerario.Add(itinerario);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
             ViewBag.EstadoItinerarioCodigo = new SelectList(db.EstadoItinerario, "Codigo", "Descripcion", itinerario.EstadoItinerarioCodigo);
@@ -93,8 +101,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Entry(itinerario).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
             ViewBag.EstadoItinerarioCodigo = new SelectList(db.EstadoItinerario, "Codigo", "Descripcion", itinerario.EstadoItinerarioCodigo);
             return View(itinerario);
@@ -124,7 +140,15 @@ namespace AerolineaVIP.Controllers
         {
             Itinerario itinerario = db.Itinerario.Find(id);
             db.Itinerario.Remove(itinerario);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
         }
 

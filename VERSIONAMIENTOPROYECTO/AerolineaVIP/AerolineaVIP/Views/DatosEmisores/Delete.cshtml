@@ -1,13 +1,17 @@
 ﻿@model AerolineaVIP.Models.DatosEmisor
 
 @{
-    ViewBag.Title = "Delete";
+    ViewBag.Title = "Eliminar · Datos del emisor";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Delete</h2>
+<h2>Eliminar</h2>
 
-<h3>Are you sure you want to delete this?</h3>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+}
+<h3>¿Está seguro de que desea eliminar este registro?</h3>
 <div>
     <h4>DatosEmisor</h4>
     <hr />
@@ -66,8 +70,8 @@
         @Html.AntiForgeryToken()
 
         <div class="form-actions no-color">
-            <input type="submit" value="Delete" class="btn btn-default" /> |
-            @Html.ActionLink("Back to List", "Index")
+            <input type="submit" value="Eliminar" class="btn btn-default" /> |
+            @Html.ActionLink("Volver a la lista", "Index")
         </div>
     }
 </div>

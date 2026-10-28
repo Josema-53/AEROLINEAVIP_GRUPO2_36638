@@ -18,8 +18,21 @@ namespace AerolineaVIP.Controllers
         [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
-            var pasajero = db.Pasajero.Include(p => p.TipoDocumentoIdentidad);
-            return View(pasajero.ToList());
+            var query = db.Pasajero.Include("TipoDocumentoIdentidad").AsQueryable();
+
+            // Filtro de búsqueda por documento, nombres o apellidos
+            if (!string.IsNullOrEmpty(Request.QueryString["buscar"]))
+            {
+                string buscar = Request.QueryString["buscar"].Trim();
+                query = query.Where(p => p.NumeroDocumento.Contains(buscar) || p.Nombres.Contains(buscar) || p.Apellidos.Contains(buscar));
+            }
+            if (!string.IsNullOrEmpty(Request.QueryString["tipo"]))
+            {
+                string tipo = Request.QueryString["tipo"];
+                query = query.Where(p => p.TipoDocumentoCodigo == tipo);
+            }
+            ViewBag.tipo = new SelectList(db.TipoDocumentoIdentidad, "Codigo", "Descripcion", Request.QueryString["tipo"]);
+            return View(query.OrderBy(p => p.Apellidos).ToList());
         }
 
         // GET: Pasajeros/Details/5
@@ -57,8 +70,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Pasajero.Add(pasajero);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
             ViewBag.TipoDocumentoCodigo = new SelectList(db.TipoDocumentoIdentidad, "Codigo", "Descripcion", pasajero.TipoDocumentoCodigo);
@@ -93,8 +114,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Entry(pasajero).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
             ViewBag.TipoDocumentoCodigo = new SelectList(db.TipoDocumentoIdentidad, "Codigo", "Descripcion", pasajero.TipoDocumentoCodigo);
             return View(pasajero);
@@ -124,7 +153,15 @@ namespace AerolineaVIP.Controllers
         {
             Pasajero pasajero = db.Pasajero.Find(id);
             db.Pasajero.Remove(pasajero);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
         }
 

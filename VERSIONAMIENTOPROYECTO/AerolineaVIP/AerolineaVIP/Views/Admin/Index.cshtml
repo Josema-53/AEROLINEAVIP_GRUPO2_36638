@@ -41,8 +41,9 @@
         <div class="card h-100">
             <div class="card-body">
                 <h4>Usuarios, pasajeros y reservas</h4>
-                <p class="text-muted">Consulta y administración de pasajeros y reservas.</p>
+                <p class="text-muted">Consulta y administración de usuarios, pasajeros y reservas.</p>
                 <ul>
+                    <li>@Html.ActionLink("Usuarios", "Usuarios", "Admin")</li>
                     <li>@Html.ActionLink("Pasajeros", "Index", "Pasajeros")</li>
                     <li>@Html.ActionLink("Reservas", "Index", "Reservas")</li>
                     @if (User.IsInRole("SuperUsuario"))
@@ -59,7 +60,9 @@
             <div class="card-body">
                 <h4>Consultas y reportes</h4>
                 <p class="text-muted">Ocupación por vuelo, reservas por estado y pagos simulados.</p>
-                <p>Próximamente.</p>
+                <ul>
+                    <li>@Html.ActionLink("Consultar reportes", "Reportes", "Admin")</li>
+                </ul>
             </div>
         </div>
     </div>

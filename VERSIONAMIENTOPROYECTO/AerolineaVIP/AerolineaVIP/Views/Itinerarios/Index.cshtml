@@ -1,14 +1,15 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.Itinerario>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Itinerarios";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+@Html.Partial("_TabsVuelos", "Itinerarios/Index")
+<h2>Itinerarios</h2>
 
 <p>
-    @Html.ActionLink("Create New", "Create")
+    @Html.ActionLink("Crear nuevo", "Create")
 </p>
 <table class="table">
     <tr>
@@ -36,9 +37,9 @@
             @Html.DisplayFor(modelItem => item.EstadoItinerario.Descripcion)
         </td>
         <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.ItinerarioId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.ItinerarioId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.ItinerarioId })
+            @Html.ActionLink("Editar", "Edit", new { id=item.ItinerarioId }) |
+            @Html.ActionLink("Detalles", "Details", new { id=item.ItinerarioId }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id=item.ItinerarioId })
         </td>
     </tr>
 }

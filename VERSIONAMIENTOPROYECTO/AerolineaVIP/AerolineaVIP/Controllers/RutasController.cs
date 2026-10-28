@@ -42,8 +42,8 @@ namespace AerolineaVIP.Controllers
         [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
-            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA");
-            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA");
+            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad");
+            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad");
             return View();
         }
 
@@ -58,12 +58,20 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Ruta.Add(ruta);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
-            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA", ruta.AeropuertoDestinoId);
-            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA", ruta.AeropuertoOrigenId);
+            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad", ruta.AeropuertoDestinoId);
+            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad", ruta.AeropuertoOrigenId);
             return View(ruta);
         }
 
@@ -80,8 +88,8 @@ namespace AerolineaVIP.Controllers
             {
                 return HttpNotFound();
             }
-            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA", ruta.AeropuertoDestinoId);
-            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA", ruta.AeropuertoOrigenId);
+            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad", ruta.AeropuertoDestinoId);
+            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad", ruta.AeropuertoOrigenId);
             return View(ruta);
         }
 
@@ -96,11 +104,19 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Entry(ruta).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
-            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA", ruta.AeropuertoDestinoId);
-            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA", ruta.AeropuertoOrigenId);
+            ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad", ruta.AeropuertoDestinoId);
+            ViewBag.AeropuertoOrigenId = new SelectList(db.Aeropuerto, "AeropuertoId", "Localidad", ruta.AeropuertoOrigenId);
             return View(ruta);
         }
 
@@ -128,7 +144,15 @@ namespace AerolineaVIP.Controllers
         {
             Ruta ruta = db.Ruta.Find(id);
             db.Ruta.Remove(ruta);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
         }
 

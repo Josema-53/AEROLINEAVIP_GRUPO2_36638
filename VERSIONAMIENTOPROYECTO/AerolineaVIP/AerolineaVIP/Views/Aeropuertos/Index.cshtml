@@ -1,14 +1,15 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.Aeropuerto>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Aeropuertos";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+@Html.Partial("_TabsVuelos", "Aeropuertos/Index")
+<h2>Aeropuertos</h2>
 
 <p>
-    @Html.ActionLink("Create New", "Create")
+    @Html.ActionLink("Crear nuevo", "Create")
 </p>
 <table class="table">
     <tr>
@@ -42,9 +43,9 @@
             @Html.DisplayFor(modelItem => item.Activo)
         </td>
         <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.AeropuertoId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.AeropuertoId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.AeropuertoId })
+            @Html.ActionLink("Editar", "Edit", new { id=item.AeropuertoId }) |
+            @Html.ActionLink("Detalles", "Details", new { id=item.AeropuertoId }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id=item.AeropuertoId })
         </td>
     </tr>
 }

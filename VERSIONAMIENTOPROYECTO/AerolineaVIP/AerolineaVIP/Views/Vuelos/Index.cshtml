@@ -6,7 +6,35 @@
     var ocupados = (Dictionary<int, int>)ViewBag.Ocupados;
 }
 
+@Html.Partial("_TabsVuelos", "Vuelos/Index")
 <h2>Administración de vuelos</h2>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success" role="alert">@TempData["Mensaje"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+}
+
+@using (Html.BeginForm("Generar", "Vuelos", FormMethod.Post, new { @class = "row g-2 align-items-end mb-3 border rounded p-2 mx-0" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="col-auto"><strong>Generar vuelos desde las frecuencias aprobadas:</strong></div>
+    <div class="col-auto">
+        <label class="form-label">Desde *</label>
+        <input type="date" name="desdeGenerar" class="form-control" required />
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Hasta *</label>
+        <input type="date" name="hastaGenerar" class="form-control" required />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-dark">Generar vuelos</button>
+        @Html.ActionLink("Consultar conflictos", "Conflictos", null, new { @class = "btn btn-outline-dark" })
+    </div>
+}
 
 <form method="get" class="mb-4">
     <div class="row">

@@ -1,50 +1,107 @@
 ﻿@{
-    ViewBag.Title = "Home Page";
+    ViewBag.Title = "Inicio";
 }
 
 <main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">PRUEBA 02</h1>
-        <p class="lead">
-            ES LA PRUEBA
-        </p>
+    <section class="portada" aria-labelledby="titulo">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-4">
+                <p class="portada-etiqueta">AEROLÍNEA VIP · Vuelos nacionales</p>
+                <h1 id="titulo">Vuela a tu próximo destino</h1>
+                <p class="lead">Reserva tu asiento entre Quito, Guayaquil, Manta y Galápagos en pocos pasos: busca, elige asiento, registra a tus pasajeros y paga.</p>
+            </div>
+            <div class="col-lg-7">
+                <div class="card buscador">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Buscar vuelos</h2>
+                        @using (Html.BeginForm("Resultados", "Vuelos", FormMethod.Get, new { id = "formInicio" }))
+                        {
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="OrigenId" class="form-label">Origen *</label>
+                                    @Html.DropDownList("OrigenId", (SelectList)ViewBag.OrigenId, "Seleccionar origen", new { @class = "form-select", required = "required" })
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="DestinoId" class="form-label">Destino *</label>
+                                    <select id="DestinoId" name="DestinoId" class="form-select" required>
+                                        <option value="">Seleccionar destino</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="Fecha" class="form-label">Fecha de salida *</label>
+                                    <input type="date" id="Fecha" name="Fecha" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="Pasajeros" class="form-label">Pasajeros *</label>
+                                    <input type="number" id="Pasajeros" name="Pasajeros" class="form-control" min="1" max="7" value="1" required />
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Buscar vuelos</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
+    <div class="alert alert-light border mt-4" role="note">
+        Horarios sujetos a la programación vigente. Los precios y asientos disponibles se confirman al momento de reservar.
+    </div>
+
+    <h2 class="h4 mt-4 mb-3">Nuestros destinos</h2>
     <div class="row">
-        <section class="col-md-4" aria-labelledby="integrantesTitle">
-            <div class="card shadow-sm h-100">
+        <section class="col-md-4 mb-3">
+            <div class="card destino h-100">
                 <div class="card-body">
-                    <h2 id="gettingStartedTitle">Integrantes</h2>
-                    <p>
-                        José María Sandoval Espinosa
-                    </p>
+                    <h3 class="h5">Guayaquil</h3>
+                    <p class="mb-1">Desde Quito</p>
+                    <p class="text-muted mb-0">Martes, jueves y sábado.</p>
                 </div>
             </div>
         </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <div class="card shadow-sm h-100 text-center">
+        <section class="col-md-4 mb-3">
+            <div class="card destino h-100">
                 <div class="card-body">
-                    <h2 id="librariesTitle">Integrantes</h2>
-
-                    <p class="fw-bold mb-3">José María Sandoval Espinosa</p>
-
-                    <img src="~/Content/images/CaraJosema.png"
-                         alt="Foto de integrante"
-                         class="rounded-circle img-fluid mx-auto d-block mb-3"
-                         style="width: 160px; height: 160px; object-fit: cover; border: 3px solid #f0f0f0;" />
-
-                    <p class="text-muted fst-italic">Estudiante de Ingeniería en TI</p>
+                    <h3 class="h5">Manta</h3>
+                    <p class="mb-1">Desde Quito</p>
+                    <p class="text-muted mb-0">Lunes, miércoles y viernes.</p>
                 </div>
             </div>
         </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <div class="card shadow-sm h-100">
+        <section class="col-md-4 mb-3">
+            <div class="card destino h-100">
                 <div class="card-body">
-                    <h2 id="hostingTitle">Información Adicional</h2>
-                    <p><b>NRC:</b>36638</p>
-                    <p><b>Asignatura:</b>Desarrollo Web para integración de Tecnologías</p>
+                    <h3 class="h5">Galápagos</h3>
+                    <p class="mb-1">Desde Quito, con escala en Guayaquil</p>
+                    <p class="text-muted mb-0">Domingo (ida y regreso el mismo día).</p>
                 </div>
             </div>
         </section>
     </div>
+
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <p class="mt-2">
+            ¿Ya tiene cuenta? @Html.ActionLink("Iniciar sesión", "Login", "Account") ·
+            @Html.ActionLink("Crear una cuenta", "Register", "Account")
+        </p>
+    }
 </main>
+
+@section Scripts {
+    <script>
+        $(function () {
+            // El destino se carga según las rutas activas del origen elegido
+            $('#OrigenId').on('change', function () {
+                var $destino = $('#DestinoId');
+                $destino.empty().append($('<option>').val('').text('Seleccionar destino'));
+                if (!$(this).val()) { return; }
+                $.getJSON('@Url.Action("DestinosPorOrigen", "Vuelos")', { origenId: $(this).val() }, function (datos) {
+                    $.each(datos, function (i, d) {
+                        $destino.append($('<option>').val(d.id).text(d.nombre));
+                    });
+                });
+            });
+        });
+    </script>
+}

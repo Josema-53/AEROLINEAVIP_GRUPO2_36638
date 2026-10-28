@@ -312,6 +312,11 @@
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Views\Admin\Reportes.cshtml" />
+    <Content Include="Views\Admin\Usuarios.cshtml" />
+    <Content Include="Views\Shared\_TabsGestion.cshtml" />
+    <Content Include="Views\Shared\_TabsVuelos.cshtml" />
+    <Content Include="Views\Vuelos\Conflictos.cshtml" />
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
     <Content Include="Content\bootstrap-grid.rtl.css" />

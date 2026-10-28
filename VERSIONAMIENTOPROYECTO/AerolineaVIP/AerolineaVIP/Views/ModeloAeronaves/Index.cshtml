@@ -1,14 +1,14 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.ModeloAeronave>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Modelos de aeronave";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+<h2>Modelos de aeronave</h2>
 
 <p>
-    @Html.ActionLink("Create New", "Create")
+    @Html.ActionLink("Crear nuevo", "Create")
 </p>
 <table class="table">
     <tr>
@@ -36,9 +36,9 @@
             @Html.DisplayFor(modelItem => item.CapacidadAsientos)
         </td>
         <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.ModeloAeronaveId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.ModeloAeronaveId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.ModeloAeronaveId })
+            @Html.ActionLink("Editar", "Edit", new { id=item.ModeloAeronaveId }) |
+            @Html.ActionLink("Detalles", "Details", new { id=item.ModeloAeronaveId }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id=item.ModeloAeronaveId })
         </td>
     </tr>
 }

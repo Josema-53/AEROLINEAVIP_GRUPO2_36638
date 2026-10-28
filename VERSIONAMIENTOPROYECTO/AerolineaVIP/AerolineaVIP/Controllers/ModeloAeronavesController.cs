@@ -55,8 +55,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.ModeloAeronave.Add(modeloAeronave);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
             return View(modeloAeronave);
@@ -89,8 +97,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Entry(modeloAeronave).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
             return View(modeloAeronave);
         }
@@ -119,7 +135,15 @@ namespace AerolineaVIP.Controllers
         {
             ModeloAeronave modeloAeronave = db.ModeloAeronave.Find(id);
             db.ModeloAeronave.Remove(modeloAeronave);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
         }
 

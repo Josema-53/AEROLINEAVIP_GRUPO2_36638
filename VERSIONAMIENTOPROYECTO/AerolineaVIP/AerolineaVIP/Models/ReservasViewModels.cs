@@ -143,6 +143,10 @@ namespace AerolineaVIP.Models
 
         [Display(Name = "Acepto las condiciones de la reserva")]
         public bool AceptaCondiciones { get; set; }
+
+        // DP-13: cuando reserva el personal (Counter/Administrador) se indica el cliente dueño de la reserva
+        [Display(Name = "Cliente (usuario o correo)")]
+        public string ClienteUsuario { get; set; }
     }
 
     // Pantalla 13: una fila de "Mis reservas"

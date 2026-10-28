@@ -1,76 +1,58 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.Pasajero>
-
 @{
-    ViewBag.Title = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Pasajeros";
 }
 
-<h2>Index</h2>
+@Html.Partial("_TabsGestion", "Pasajeros/Index")
+<h2>Pasajeros</h2>
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-5">
+            <label>Buscar (documento, nombres o apellidos):</label>
+            <input type="text" name="buscar" value="@Request.QueryString["buscar"]" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label>Tipo de documento:</label>
+            @Html.DropDownList("tipo", (SelectList)ViewBag.tipo, "-- Todos --", new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="row mt-2" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">Limpiar Filtros</a>
+        </div>
+    </div>
+</form>
+
+<p>@Html.ActionLink("Crear nuevo", "Create")</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No se encontraron registros.</div>
+}
 <table class="table">
     <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.NumeroDocumento)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Nombres)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Apellidos)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.FechaNacimiento)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Correo)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Telefono)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.FechaRegistro)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.TipoDocumentoIdentidad.Descripcion)
-        </th>
+        <th>Documento</th>
+        <th>Nombres</th>
+        <th>Apellidos</th>
+        <th>Correo</th>
+        <th>Teléfono</th>
         <th></th>
     </tr>
-
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.NumeroDocumento)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Nombres)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Apellidos)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.FechaNacimiento)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Correo)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Telefono)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.FechaRegistro)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.TipoDocumentoIdentidad.Descripcion)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.PasajeroId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.PasajeroId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.PasajeroId })
-        </td>
-    </tr>
-}
-
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.TipoDocumentoIdentidad.Descripcion @item.NumeroDocumento</td>
+            <td>@item.Nombres</td>
+            <td>@item.Apellidos</td>
+            <td>@item.Correo</td>
+            <td>@item.Telefono</td>
+            <td>
+                @Html.ActionLink("Editar", "Edit", new { id = item.PasajeroId }) |
+                @Html.ActionLink("Detalles", "Details", new { id = item.PasajeroId }) |
+                @Html.ActionLink("Eliminar", "Delete", new { id = item.PasajeroId })
+            </td>
+        </tr>
+    }
 </table>

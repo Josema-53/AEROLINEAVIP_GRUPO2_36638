@@ -66,6 +66,15 @@
             no se realizan cobros reales.
         </small>
     </div>
+    if (User.IsInRole("Counter") || User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
+    {
+        <div class="mb-3" style="max-width: 420px;">
+            @Html.LabelFor(m => m.ClienteUsuario, new { @class = "form-label" }) *
+            @Html.TextBoxFor(m => m.ClienteUsuario, new { @class = "form-control", placeholder = "Ej.: cliente01 o cliente01@gmail.com" })
+            @Html.ValidationMessageFor(m => m.ClienteUsuario, "", new { @class = "text-danger" })
+            <small class="text-muted">La reserva quedará registrada a nombre de este cliente.</small>
+        </div>
+    }
     <div class="form-check mb-3">
         @Html.CheckBoxFor(m => m.AceptaCondiciones, new { @class = "form-check-input" })
         @Html.LabelFor(m => m.AceptaCondiciones, new { @class = "form-check-label" }) *

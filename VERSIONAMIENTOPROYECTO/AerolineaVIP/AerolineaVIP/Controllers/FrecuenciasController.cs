@@ -42,7 +42,7 @@ namespace AerolineaVIP.Controllers
         [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
-            ViewBag.RutaId = new SelectList(db.Ruta, "RutaId", "RutaId");
+            ViewBag.RutaId = new SelectList(TextoRutas(), "RutaId", "Texto");
             return View();
         }
 
@@ -57,11 +57,19 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Frecuencia.Add(frecuencia);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
-            ViewBag.RutaId = new SelectList(db.Ruta, "RutaId", "RutaId", frecuencia.RutaId);
+            ViewBag.RutaId = new SelectList(TextoRutas(), "RutaId", "Texto", frecuencia.RutaId);
             return View(frecuencia);
         }
 
@@ -78,7 +86,7 @@ namespace AerolineaVIP.Controllers
             {
                 return HttpNotFound();
             }
-            ViewBag.RutaId = new SelectList(db.Ruta, "RutaId", "RutaId", frecuencia.RutaId);
+            ViewBag.RutaId = new SelectList(TextoRutas(), "RutaId", "Texto", frecuencia.RutaId);
             return View(frecuencia);
         }
 
@@ -93,10 +101,18 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Entry(frecuencia).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
-            ViewBag.RutaId = new SelectList(db.Ruta, "RutaId", "RutaId", frecuencia.RutaId);
+            ViewBag.RutaId = new SelectList(TextoRutas(), "RutaId", "Texto", frecuencia.RutaId);
             return View(frecuencia);
         }
 
@@ -124,8 +140,22 @@ namespace AerolineaVIP.Controllers
         {
             Frecuencia frecuencia = db.Frecuencia.Find(id);
             db.Frecuencia.Remove(frecuencia);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
+        }
+
+        private IEnumerable<object> TextoRutas()
+        {
+            return db.Ruta.Include("Aeropuerto").Include("Aeropuerto1").ToList()
+                .Select(r => new { r.RutaId, Texto = r.Aeropuerto1.Localidad + " → " + r.Aeropuerto.Localidad });
         }
 
         protected override void Dispose(bool disposing)

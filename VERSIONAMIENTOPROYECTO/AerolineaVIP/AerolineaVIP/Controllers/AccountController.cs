@@ -275,25 +275,39 @@ namespace AerolineaVIP.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var user = await UserManager.FindByNameAsync(model.Email);
-                if (user == null || !(await UserManager.IsEmailConfirmedAsync(user.Id)))
-                {
-                    // No revelar que el usuario no existe o que no está confirmado
-                    return View("ForgotPasswordConfirmation");
-                }
-
-                // Para obtener más información sobre cómo habilitar la confirmación de cuentas y el restablecimiento de contraseña, visite https://go.microsoft.com/fwlink/?LinkID=320771
-                // Enviar un correo electrónico con este vínculo
-                // string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
-                // var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);		
-                // await UserManager.SendEmailAsync(user.Id, "Restablecer contraseña", "Para restablecer la contraseña, haga clic <a href=\"" + callbackUrl + "\">aquí</a>");
-                // return RedirectToAction("ForgotPasswordConfirmation", "Account");
+                return View(model);
             }
 
-            // Si llegamos a este punto, es que se ha producido un error y volvemos a mostrar el formulario
-            return View(model);
+            // Límite: una solicitud por minuto en la misma sesión
+            if (Session["UltimaRecuperacion"] != null && (DateTime.Now - (DateTime)Session["UltimaRecuperacion"]).TotalSeconds < 60)
+            {
+                ModelState.AddModelError("", "Ya se registró una solicitud. Espere un minuto antes de intentar nuevamente.");
+                return View(model);
+            }
+            Session["UltimaRecuperacion"] = DateTime.Now;
+
+            string dato = model.Email.Trim();
+            var user = dato.Contains("@") ? await UserManager.FindByEmailAsync(dato) : await UserManager.FindByNameAsync(dato);
+            if (user != null)
+            {
+                try
+                {
+                    // Se genera el token de restablecimiento, pero no se muestra en pantalla.
+                    // El envío real del correo queda fuera del alcance de esta entrega.
+                    string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
+                }
+                catch (Exception)
+                {
+                    // No se revela ningún detalle al usuario
+                }
+            }
+
+            // Mensaje neutral: no indica si la cuenta existe o no
+            ViewBag.Mensaje = "Si los datos corresponden a una cuenta registrada, recibirá las instrucciones para recuperar el acceso.";
+            ModelState.Clear();
+            return View(new ForgotPasswordViewModel());
         }
 
         //

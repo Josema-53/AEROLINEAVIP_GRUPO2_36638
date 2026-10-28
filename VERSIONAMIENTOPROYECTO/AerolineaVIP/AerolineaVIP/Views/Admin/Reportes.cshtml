@@ -1,0 +1,91 @@
+﻿@{
+    ViewBag.Title = "Consultas y reportes";
+    var columnas = ViewBag.Columnas as string[];
+    var filas = ViewBag.Filas as List<string[]>;
+    var estados = ViewBag.Estados as SelectList;
+}
+
+<h2>Consultas y reportes</h2>
+
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Consulta *</label>
+            @Html.DropDownList("consulta", (SelectList)ViewBag.consulta, "-- Seleccione --", new { @class = "form-control", required = "required" })
+        </div>
+        <div class="col-md-4">
+            <label>Fecha desde *</label>
+            <input type="date" name="desde" value="@Request.QueryString["desde"]" class="form-control" required />
+        </div>
+        <div class="col-md-4">
+            <label>Fecha hasta *</label>
+            <input type="date" name="hasta" value="@Request.QueryString["hasta"]" class="form-control" required />
+        </div>
+        <div class="col-md-4">
+            <label>Ruta (opcional)</label>
+            @Html.DropDownList("ruta", (SelectList)ViewBag.ruta, "-- Todas --", new { @class = "form-control" })
+        </div>
+        <div class="col-md-4">
+            <label>Aeronave (opcional)</label>
+            @Html.DropDownList("aeronave", (SelectList)ViewBag.aeronave, "-- Todas --", new { @class = "form-control" })
+        </div>
+        <div class="col-md-4">
+            <label>Estado (opcional)</label>
+            @if (estados != null)
+            {
+                @Html.DropDownList("estado", estados, "-- Todos --", new { @class = "form-control" })
+            }
+            else
+            {
+                <select name="estado" class="form-control"><option value="">-- Todos --</option></select>
+            }
+        </div>
+    </div>
+    <div class="row mt-2" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Consultar</button>
+            <a href="@Request.Url" class="btn btn-secondary">Actualizar resultados</a>
+            <a href="@Url.Action("Reportes")" class="btn btn-outline-secondary">Limpiar Filtros</a>
+        </div>
+    </div>
+</form>
+<p class="text-muted small">La ruta y la aeronave aplican a «Ocupación por vuelo». El estado se refiere al vuelo, a la reserva o al pago según la consulta elegida.</p>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+@if (columnas != null)
+{
+    <p class="text-muted">Datos con corte al @(((DateTime)ViewBag.Corte).ToString("dd/MM/yyyy HH:mm")).
+        @if ((string)ViewBag.ConsultaActual == "OCUPACION")
+        {
+            @:Disponibles = Capacidad − Ocupados (asientos reservados u ocupados).
+        }
+    </p>
+    if (filas.Count == 0)
+    {
+        <div class="alert alert-info">No hay resultados para los filtros seleccionados.</div>
+    }
+    else
+    {
+        <table class="table table-sm">
+            <tr>
+                @foreach (var c in columnas)
+                {
+                    <th>@c</th>
+                }
+            </tr>
+            @foreach (var f in filas)
+            {
+                <tr>
+                    @foreach (var valor in f)
+                    {
+                        <td>@valor</td>
+                    }
+                </tr>
+            }
+        </table>
+    }
+}

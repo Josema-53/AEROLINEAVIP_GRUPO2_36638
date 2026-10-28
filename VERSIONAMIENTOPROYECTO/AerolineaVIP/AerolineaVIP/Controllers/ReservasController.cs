@@ -19,8 +19,28 @@ namespace AerolineaVIP.Controllers
         [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
-            var reserva = db.Reserva.Include(r => r.EstadoReserva);
-            return View(reserva.ToList());
+            ReglasReserva.ProcesarExpiraciones(db);
+            var query = db.Reserva.Include("EstadoReserva").Include("Compra").AsQueryable();
+
+            // Filtros de búsqueda por código y estado
+            if (!string.IsNullOrEmpty(Request.QueryString["codigo"]))
+            {
+                string codigo = Request.QueryString["codigo"].Trim().ToUpper();
+                query = query.Where(r => r.CodigoReserva.Contains(codigo));
+            }
+            if (!string.IsNullOrEmpty(Request.QueryString["estado"]))
+            {
+                string estado = Request.QueryString["estado"];
+                query = query.Where(r => r.EstadoReservaCodigo == estado);
+            }
+            ViewBag.estado = new SelectList(db.EstadoReserva, "Codigo", "Descripcion", Request.QueryString["estado"]);
+
+            // Nombre de usuario del titular (base de Identity)
+            using (var identidad = new ApplicationDbContext())
+            {
+                ViewBag.Usuarios = identidad.Users.ToList().ToDictionary(u => u.Id, u => u.UserName);
+            }
+            return View(query.OrderByDescending(r => r.FechaCreacion).ToList());
         }
 
         // GET: Reservas/Details/5
@@ -58,8 +78,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Reserva.Add(reserva);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
 
             ViewBag.EstadoReservaCodigo = new SelectList(db.EstadoReserva, "Codigo", "Descripcion", reserva.EstadoReservaCodigo);
@@ -94,8 +122,16 @@ namespace AerolineaVIP.Controllers
             if (ModelState.IsValid)
             {
                 db.Entry(reserva).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
+                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                }
             }
             ViewBag.EstadoReservaCodigo = new SelectList(db.EstadoReserva, "Codigo", "Descripcion", reserva.EstadoReservaCodigo);
             return View(reserva);
@@ -125,7 +161,15 @@ namespace AerolineaVIP.Controllers
         {
             Reserva reserva = db.Reserva.Find(id);
             db.Reserva.Remove(reserva);
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se puede eliminar: el registro tiene información relacionada.";
+                return RedirectToAction("Delete", new { id = id });
+            }
             return RedirectToAction("Index");
         }
 
@@ -359,7 +403,25 @@ namespace AerolineaVIP.Controllers
             if (!model.AceptaCondiciones)
             {
                 ModelState.AddModelError("AceptaCondiciones", "Debe aceptar las condiciones de la reserva.");
-                return View(CrearModeloConfirmacion(operacion));
+                var modeloError = CrearModeloConfirmacion(operacion);
+                modeloError.ClienteUsuario = model.ClienteUsuario;
+                return View(modeloError);
+            }
+
+            // DP-13: el cliente reserva para sí mismo; el personal debe indicar un cliente existente
+            string usuarioReserva = User.Identity.GetUserId();
+            if (User.IsInRole("Counter") || User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
+            {
+                string clienteId = BuscarCliente(model.ClienteUsuario);
+                if (clienteId == null)
+                {
+                    ModelState.AddModelError("ClienteUsuario", "Ingrese el usuario o correo de un cliente registrado.");
+                    var modeloError = CrearModeloConfirmacion(operacion);
+                    modeloError.ClienteUsuario = model.ClienteUsuario;
+                    modeloError.AceptaCondiciones = true;
+                    return View(modeloError);
+                }
+                usuarioReserva = clienteId;
             }
 
             ReglasReserva.ProcesarExpiraciones(db);
@@ -410,7 +472,7 @@ namespace AerolineaVIP.Controllers
                 {
                     reserva = new Reserva
                     {
-                        UsuarioId = User.Identity.GetUserId(),
+                        UsuarioId = usuarioReserva,
                         FechaCreacion = ahora,
                         FechaExpiracion = expiracion,
                         EstadoReservaCodigo = "PENDIENTE"
@@ -767,6 +829,26 @@ namespace AerolineaVIP.Controllers
                 MotivoNoCancelable = ReglasReserva.MotivoNoCancelable(reserva),
                 EsPagada = compra != null && compra.EstadoCompraCodigo == "PAGADA"
             };
+        }
+
+        // DP-13: devuelve el Id del cliente (rol Cliente) por nombre de usuario o correo
+        private string BuscarCliente(string dato)
+        {
+            if (string.IsNullOrWhiteSpace(dato))
+            {
+                return null;
+            }
+            dato = dato.Trim();
+            using (var identidad = new ApplicationDbContext())
+            {
+                var usermanager = new UserManager<ApplicationUser>(new Microsoft.AspNet.Identity.EntityFramework.UserStore<ApplicationUser>(identidad));
+                var usuario = dato.Contains("@") ? usermanager.FindByEmail(dato) : usermanager.FindByName(dato);
+                if (usuario == null || !usermanager.IsInRole(usuario.Id, "Cliente"))
+                {
+                    return null;
+                }
+                return usuario.Id;
+            }
         }
 
         protected override void Dispose(bool disposing)

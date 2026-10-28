@@ -1,0 +1,18 @@
+﻿@model string
+@{
+    var pestanas = new[]
+    {
+        new { Controlador = "Admin", Accion = "Usuarios", Texto = "Usuarios" },
+        new { Controlador = "Pasajeros", Accion = "Index", Texto = "Pasajeros" },
+        new { Controlador = "Reservas", Accion = "Index", Texto = "Reservas" }
+    };
+}
+<ul class="nav nav-tabs mb-3">
+    @foreach (var p in pestanas)
+    {
+        bool activa = p.Controlador + "/" + p.Accion == Model;
+        <li class="nav-item">
+            @Html.ActionLink(p.Texto, p.Accion, p.Controlador, null, new { @class = "nav-link" + (activa ? " active" : "") })
+        </li>
+    }
+</ul>

@@ -140,9 +140,10 @@ namespace AerolineaVIP.Models
 
     public class ForgotPasswordViewModel
     {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Correo electrónico")]
+        // Pantalla 4: se acepta el correo o el nombre de usuario
+        [Required(ErrorMessage = "Ingrese su correo o nombre de usuario.")]
+        [StringLength(256)]
+        [Display(Name = "Correo o nombre de usuario")]
         public string Email { get; set; }
     }
 }
