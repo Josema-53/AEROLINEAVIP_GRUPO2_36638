@@ -1,51 +1,71 @@
 ﻿@model AerolineaVIP.Models.Vuelo
 
 @{
-    ViewBag.Title = "Details";
+    ViewBag.Title = "Detalle del vuelo";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var asientos = (List<AerolineaVIP.Models.AsientoViewModel>)ViewBag.Asientos;
+    var asignaciones = (List<AerolineaVIP.Models.ReservaPasajeroVuelo>)ViewBag.Asignaciones;
+    var ruta = Model.Frecuencia.Ruta;
 }
 
-<h2>Details</h2>
+<h2>Detalle del vuelo @AerolineaVIP.Models.ReglasReserva.CodigoVuelo(Model.VueloId)</h2>
 
-<div>
-    <h4>Vuelo</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.FechaOperacion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.FechaOperacion)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Aeronave.Matricula)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Aeronave.Matricula)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.EstadoVuelo.Descripcion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.EstadoVuelo.Descripcion)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Frecuencia.FrecuenciaId)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Frecuencia.FrecuenciaId)
-        </dd>
-
-    </dl>
+<div class="border rounded p-2 mb-3">
+    <div class="row">
+        <div class="col-md-4"><strong>Fecha:</strong> @Model.FechaOperacion.ToString("dd/MM/yyyy")</div>
+        <div class="col-md-4"><strong>Ruta:</strong> @ruta.Aeropuerto1.Localidad (@ruta.Aeropuerto1.CodigoIATA) → @ruta.Aeropuerto.Localidad (@ruta.Aeropuerto.CodigoIATA)</div>
+        <div class="col-md-4"><strong>Horario:</strong> @Model.Frecuencia.HoraSalida.ToString("hh\\:mm") – @Model.Frecuencia.HoraLlegada.ToString("hh\\:mm")</div>
+        <div class="col-md-4"><strong>Aeronave:</strong> @(Model.Aeronave != null ? Model.Aeronave.Matricula + " · " + Model.Aeronave.ModeloAeronave.Nombre : "Sin asignar")</div>
+        <div class="col-md-4"><strong>Estado:</strong> @Model.EstadoVueloCodigo</div>
+        <div class="col-md-4"><strong>Tarifa de ejemplo:</strong> @ruta.TarifaReferencial.ToString("N2") USD</div>
+    </div>
 </div>
-<p>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.VueloId }) |
-    @Html.ActionLink("Back to List", "Index")
+
+@if (asientos.Count > 0)
+{
+    <h4>Asientos</h4>
+    @Html.Partial("_MapaAsientos", new AerolineaVIP.Models.MapaAsientosViewModel { Asientos = asientos, Seleccionable = false, MostrarLeyenda = true })
+    <p class="mt-2">
+        Disponibles: <strong>@asientos.Count(a => a.Estado == "DISPONIBLE")</strong> ·
+        Reservados: <strong>@asientos.Count(a => a.Estado == "RESERVADO")</strong> ·
+        Ocupados: <strong>@asientos.Count(a => a.Estado == "OCUPADO")</strong>
+    </p>
+}
+else
+{
+    <div class="alert alert-info">Este vuelo aún no tiene aeronave asignada; sus asientos no pueden reservarse.</div>
+}
+
+<h4 class="mt-4">Pasajeros con asiento en este vuelo</h4>
+@if (asignaciones.Count == 0)
+{
+    <p class="text-muted">No hay asientos reservados ni ocupados.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <tr>
+            <th>Asiento</th>
+            <th>Pasajero</th>
+            <th>Documento</th>
+            <th>Reserva</th>
+            <th>Estado del asiento</th>
+        </tr>
+        @foreach (var a in asignaciones)
+        {
+            var asiento = asientos.FirstOrDefault(x => x.NumeroAsiento == a.NumeroAsiento);
+            <tr>
+                <td>@(asiento != null ? asiento.Codigo : a.NumeroAsiento.ToString())</td>
+                <td>@a.Pasajero.Nombres @a.Pasajero.Apellidos</td>
+                <td>@a.Pasajero.NumeroDocumento</td>
+                <td>@a.Reserva.CodigoReserva</td>
+                <td>@(a.EstadoAsignacionCodigo == "CONFIRMADA" ? "Ocupado (pagado)" : "Reservado (pendiente de pago)")</td>
+            </tr>
+        }
+    </table>
+}
+
+<p class="mt-3">
+    @Html.ActionLink("Editar", "Edit", new { id = Model.VueloId }, new { @class = "btn btn-outline-dark" })
+    @Html.ActionLink("Volver a la lista", "Index", null, new { @class = "btn btn-outline-secondary" })
 </p>

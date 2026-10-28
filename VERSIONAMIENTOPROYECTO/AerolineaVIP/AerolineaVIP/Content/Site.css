@@ -18,3 +18,53 @@ select,
 textarea {
     max-width: 280px;
 }
+
+/* ===================== MAPA DE ASIENTOS (pantallas 7, 8 y 19) ===================== */
+/* Escritorio: proa a la izquierda. Móvil: avión vertical con la proa arriba. */
+.cabina-contenedor { overflow-x: auto; }
+.cabina {
+    display: grid;
+    grid-template-columns: 90px repeat(5, minmax(64px, 1fr)) 80px;
+    grid-template-rows: 70px 30px 70px;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid #6c757d;
+    border-radius: 60px 24px 24px 60px;
+    background: #f8f9fa;
+    min-width: 620px;
+}
+.cabina > * { grid-column: var(--c); grid-row: var(--r); }
+.cabina .cab-mando { grid-column: 1; grid-row: 1 / span 3; display: flex; align-items: center; justify-content: center; text-align: center; font-size: .8rem; border-right: 1px solid #ced4da; }
+.cabina .cab-pasillo { grid-column: 2 / span 5; grid-row: 2; display: flex; align-items: center; justify-content: center; font-size: .75rem; letter-spacing: 3px; color: #6c757d; border: 1px dashed #ced4da; }
+.cab-elemento { display: flex; align-items: center; justify-content: center; text-align: center; font-size: .75rem; color: #6c757d; border: 1px dashed #adb5bd; border-radius: 6px; }
+
+.asiento {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 44px; border-radius: 10px; border: 2px solid transparent; color: #fff; padding: 2px;
+}
+.asiento small { font-size: .7rem; }
+.asiento-disponible { background: #2e7d4f; }
+.asiento-reservado { background: #6f42c1; }
+.asiento-ocupado { background: #c0392b; }
+button.asiento-disponible { cursor: pointer; }
+button.asiento:disabled { cursor: not-allowed; opacity: 1; }
+button.asiento:focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; }
+.asiento-seleccionado { border: 4px solid #000; position: relative; }
+.asiento-seleccionado::after { content: "✓"; position: absolute; top: -10px; right: -8px; background: #000; color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; line-height: 20px; text-align: center; }
+
+.leyenda-asientos { display: flex; flex-wrap: wrap; gap: 12px; font-size: .85rem; }
+.leyenda-asientos .muestra { display: inline-block; width: 16px; height: 16px; border-radius: 4px; vertical-align: middle; }
+
+@media (max-width: 576px) {
+    .cabina {
+        grid-template-columns: 1fr 40px 1fr;
+        grid-template-rows: 60px repeat(5, 64px) 60px;
+        border-radius: 80px 80px 24px 24px;
+        min-width: 0;
+        max-width: 320px;
+        margin: 0 auto;
+    }
+    .cabina > * { grid-column: var(--mc); grid-row: var(--mr); }
+    .cabina .cab-mando { grid-column: 1 / span 3; grid-row: 1; border-right: 0; border-bottom: 1px solid #ced4da; }
+    .cabina .cab-pasillo { grid-column: 2; grid-row: 2 / span 5; writing-mode: vertical-rl; }
+}

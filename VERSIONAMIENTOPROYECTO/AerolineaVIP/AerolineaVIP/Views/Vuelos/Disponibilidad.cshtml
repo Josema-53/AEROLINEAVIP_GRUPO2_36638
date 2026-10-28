@@ -1,0 +1,65 @@
+﻿@model AerolineaVIP.Models.DisponibilidadViewModel
+@{
+    ViewBag.Title = "Disponibilidad de asientos";
+}
+
+<h2>Disponibilidad de asientos</h2>
+
+@if (Model.Vuelo == null)
+{
+    <div class="alert alert-warning" role="alert">@Model.Mensaje</div>
+    @Html.ActionLink("Buscar vuelos", "Buscar", "Vuelos", null, new { @class = "btn btn-outline-dark" })
+}
+else
+{
+    var v = Model.Vuelo;
+    <div class="border rounded p-2 mb-3">
+        <div class="row">
+            <div class="col-md-4"><strong>Vuelo:</strong> @v.CodigoVuelo</div>
+            <div class="col-md-4"><strong>Fecha:</strong> @v.Fecha.ToString("ddd dd/MM/yyyy", new System.Globalization.CultureInfo("es-EC"))</div>
+            <div class="col-md-4"><strong>Aeronave:</strong> @(v.Aeronave ?? "Sin asignar")</div>
+            <div class="col-md-4"><strong>Ruta:</strong> @v.CiudadOrigen (@v.Origen) → @v.CiudadDestino (@v.Destino)</div>
+            <div class="col-md-4"><strong>Horario:</strong> @v.HoraSalida.ToString("hh\\:mm") – @v.HoraLlegada.ToString("hh\\:mm")</div>
+            <div class="col-md-4"><strong>Capacidad:</strong> @v.Capacidad asientos</div>
+        </div>
+    </div>
+
+    if (Model.Asientos.Count > 0)
+    {
+        @Html.Partial("_MapaAsientos", new AerolineaVIP.Models.MapaAsientosViewModel { Asientos = Model.Asientos, Seleccionable = false, MostrarLeyenda = true })
+    }
+
+    if (Model.Mensaje != null)
+    {
+        <div class="alert alert-warning" role="alert">@Model.Mensaje</div>
+    }
+
+    <div class="row mt-3">
+        <div class="col-md-5">
+            <table class="table table-sm">
+                <tr><td>Asientos disponibles</td><td class="text-end"><strong>@Model.Disponibles de @v.Capacidad</strong></td></tr>
+                <tr><td>Reservados</td><td class="text-end">@Model.Reservados</td></tr>
+                <tr><td>Ocupados</td><td class="text-end">@Model.Ocupados</td></tr>
+            </table>
+        </div>
+        <div class="col-md-7">
+            <div class="alert alert-light border" role="status">
+                <strong>Información:</strong> Disponibilidad calculada a las @Model.HoraCalculo.ToString("HH:mm").
+                Se comprobará nuevamente al confirmar la reserva.
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        @Html.ActionLink("Actualizar disponibilidad", "Disponibilidad", "Vuelos", new { id = v.VueloId, pasajeros = Model.Pasajeros, vuelos = Model.VuelosIds }, new { @class = "btn btn-outline-secondary" })
+        @if (Model.PuedeContinuar)
+        {
+            @Html.ActionLink("Continuar", "SeleccionAsiento", "Reservas", new { vuelos = Model.VuelosIds, pasajeros = Model.Pasajeros }, new { @class = "btn btn-dark" })
+        }
+        else
+        {
+            <button class="btn btn-dark" disabled>Continuar</button>
+        }
+        <a href="javascript:history.back()" class="btn btn-outline-dark">Regresar a resultados</a>
+    </div>
+}

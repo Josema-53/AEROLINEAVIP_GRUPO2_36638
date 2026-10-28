@@ -1,0 +1,55 @@
+﻿@model AerolineaVIP.Models.MapaAsientosViewModel
+@{
+    // Posición de cada fila en la cabina (proa a la izquierda): columnas 2 y 3, mesa en la 4, columnas 5 y 6
+    var columnaPorFila = new Dictionary<int, int> { { 1, 2 }, { 2, 3 }, { 3, 5 }, { 4, 6 } };
+}
+
+<div class="cabina-contenedor">
+    <div class="cabina" role="group" aria-label="Mapa de asientos del Embraer Phenom 300E">
+        <div class="cab-mando">Cabina de mando</div>
+        <div class="cab-pasillo">PASILLO</div>
+        <div class="cab-elemento" style="--c:2; --r:3; --mc:1; --mr:2;">Puerta de acceso</div>
+        <div class="cab-elemento" style="--c:4; --r:1; --mc:3; --mr:4;">Mesa</div>
+        <div class="cab-elemento" style="--c:4; --r:3; --mc:1; --mr:4;">Mesa</div>
+        <div class="cab-elemento" style="--c:7; --r:1; --mc:3; --mr:7;">Baño</div>
+        <div class="cab-elemento" style="--c:7; --r:3; --mc:1; --mr:7;">Equipaje / servicio</div>
+
+        @foreach (var a in Model.Asientos)
+        {
+            int c = columnaPorFila[a.Fila];
+            int r = a.Lado == "D" ? 1 : 3;
+            int mc = a.Lado == "D" ? 3 : 1;
+            string lado = a.Lado == "D" ? "lado derecho" : "lado izquierdo";
+            string posicion = "--c:" + c + "; --r:" + r + "; --mc:" + mc + "; --mr:" + c + ";";
+            string etiqueta = "Asiento " + a.Codigo + ", fila " + a.Fila + ", " + lado + ", " + a.EstadoTexto.ToLower();
+
+            if (Model.Seleccionable)
+            {
+                <button type="button" class="asiento @a.ClaseCss" style="@posicion"
+                        data-numero="@a.NumeroAsiento" data-codigo="@a.Codigo" data-estado="@a.Estado"
+                        aria-label="@etiqueta" aria-pressed="false" @(a.Estado != "DISPONIBLE" ? "disabled" : "")>
+                    <strong>@a.Codigo</strong><small class="estado-texto">@a.EstadoTexto</small>
+                </button>
+            }
+            else
+            {
+                <div class="asiento @a.ClaseCss" style="@posicion" aria-label="@etiqueta" title="@a.Ubicacion">
+                    <strong>@a.Codigo</strong><small class="estado-texto">@a.EstadoTexto</small>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@if (Model.MostrarLeyenda)
+{
+    <div class="leyenda-asientos mt-2">
+        <span><span class="muestra asiento-disponible"></span> Verde · Disponible (puede seleccionarse)</span>
+        <span><span class="muestra asiento-reservado"></span> Morado · Reservado (pendiente de pago, no seleccionable)</span>
+        <span><span class="muestra asiento-ocupado"></span> Rojo · Ocupado (compra pagada, no seleccionable)</span>
+        @if (Model.Seleccionable)
+        {
+            <span><span class="muestra asiento-disponible asiento-seleccionado"></span> Borde negro grueso + ✓ · Su selección actual (aún no reservada)</span>
+        }
+    </div>
+}

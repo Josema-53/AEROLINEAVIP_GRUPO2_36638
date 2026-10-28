@@ -1,0 +1,126 @@
+﻿@model AerolineaVIP.Models.ResultadosVuelosViewModel
+@{
+    ViewBag.Title = "Resultados de vuelos";
+    var b = Model.Busqueda;
+    string fechaTexto = b.Fecha.Value.ToString("dddd dd/MM/yyyy", new System.Globalization.CultureInfo("es-EC"));
+}
+
+<h2>Resultados de vuelos</h2>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center border rounded p-2 mb-3">
+    <span>
+        <strong>@Model.OrigenTexto → @Model.DestinoTexto</strong>
+        · @fechaTexto · @b.Pasajeros @(b.Pasajeros == 1 ? "pasajero" : "pasajeros")
+    </span>
+    @Html.ActionLink("Modificar búsqueda", "Buscar", "Vuelos",
+        new { origenId = b.OrigenId, destinoId = b.DestinoId, fecha = b.Fecha.Value.ToString("yyyy-MM-dd"), pasajeros = b.Pasajeros },
+        new { @class = "btn btn-outline-dark btn-sm" })
+</div>
+
+@using (Html.BeginForm("Resultados", "Vuelos", FormMethod.Get, new { @class = "row g-2 align-items-end mb-3" }))
+{
+    @Html.Hidden("OrigenId", b.OrigenId)
+    @Html.Hidden("DestinoId", b.DestinoId)
+    @Html.Hidden("Fecha", b.Fecha.Value.ToString("yyyy-MM-dd"))
+    @Html.Hidden("Pasajeros", b.Pasajeros)
+    <div class="col-auto">
+        <label for="Horario" class="form-label">Filtro de horario (opcional)</label>
+        @Html.DropDownList("Horario", new SelectList(new[]
+        {
+            new { Valor = "", Texto = "Todos" },
+            new { Valor = "Manana", Texto = "Mañana" },
+            new { Valor = "Tarde", Texto = "Tarde" },
+            new { Valor = "Noche", Texto = "Noche" }
+        }, "Valor", "Texto", b.Horario), new { @class = "form-select" })
+    </div>
+    <div class="col-auto">
+        <input type="submit" value="Filtrar" class="btn btn-outline-secondary" />
+    </div>
+}
+
+@if (Model.Mensaje != null)
+{
+    <div class="alert alert-info" role="alert">@Model.Mensaje</div>
+}
+
+@{ int n = 0; }
+@foreach (var opcion in Model.Opciones)
+{
+    n++;
+    var primero = opcion.Tramos.First();
+    var ultimo = opcion.Tramos.Last();
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between">
+                <div>
+                    @if (opcion.EsItinerario)
+                    {
+                        <h5 class="mb-1">@primero.CiudadOrigen → @ultimo.CiudadDestino · @(opcion.Tramos.Count - 1) escala en @primero.CiudadDestino</h5>
+                        <p class="mb-1">@primero.HoraSalida.ToString("hh\\:mm") – @ultimo.HoraLlegada.ToString("hh\\:mm") · @opcion.Tramos.Count tramos</p>
+                    }
+                    else
+                    {
+                        <h5 class="mb-1">@primero.HoraSalida.ToString("hh\\:mm") – @primero.HoraLlegada.ToString("hh\\:mm") · Directo</h5>
+                        <p class="mb-1">@primero.CodigoVuelo · @(primero.Aeronave ?? "Sin aeronave asignada")</p>
+                    }
+
+                    @if (opcion.Comercializable)
+                    {
+                        <span class="badge bg-success">@opcion.Disponibles de 7 disponibles</span>
+                        if (opcion.Disponibles <= 2)
+                        {
+                            <span class="text-warning ms-2">Quedan @opcion.Disponibles asientos disponibles.</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@opcion.Motivo</span>
+                    }
+                </div>
+                <div class="text-end">
+                    <p class="mb-1"><strong>@opcion.ImportePorPasajero.ToString("N2") USD</strong> por pasajero <small class="text-muted">(tarifa de ejemplo)</small></p>
+                </div>
+            </div>
+
+            <div class="collapse mt-2" id="detalle@(n)">
+                <table class="table table-sm mb-0">
+                    <tr><th>Tramo</th><th>Vuelo</th><th>Ruta</th><th>Horario</th><th>Aeronave</th><th>Disponibles</th><th></th></tr>
+                    @for (int i = 0; i < opcion.Tramos.Count; i++)
+                    {
+                        var t = opcion.Tramos[i];
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>@t.CodigoVuelo</td>
+                            <td>@t.CiudadOrigen (@t.Origen) → @t.CiudadDestino (@t.Destino)</td>
+                            <td>@t.HoraSalida.ToString("hh\\:mm") – @t.HoraLlegada.ToString("hh\\:mm")</td>
+                            <td>@(t.Aeronave ?? "Sin asignar")</td>
+                            <td>@t.Disponibles de @t.Capacidad</td>
+                            <td>@Html.ActionLink("Consultar disponibilidad", "Disponibilidad", "Vuelos", new { id = t.VueloId, pasajeros = b.Pasajeros, vuelos = opcion.VuelosIds }, null)</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+
+            <div class="mt-2">
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#detalle@(n)" aria-expanded="false">Ver detalles</button>
+                @if (!opcion.EsItinerario)
+                {
+                    @Html.ActionLink("Consultar disponibilidad", "Disponibilidad", "Vuelos", new { id = primero.VueloId, pasajeros = b.Pasajeros }, new { @class = "btn btn-outline-dark btn-sm" })
+                }
+                @if (opcion.Comercializable)
+                {
+                    @Html.ActionLink("Seleccionar vuelo", "SeleccionAsiento", "Reservas", new { vuelos = opcion.VuelosIds, pasajeros = b.Pasajeros }, new { @class = "btn btn-dark btn-sm" })
+                }
+                else
+                {
+                    <button class="btn btn-dark btn-sm" disabled>Seleccionar vuelo</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.Opciones.Count > 0)
+{
+    <p class="text-muted">La disponibilidad se verificará para la fecha y el vuelo seleccionados.</p>
+}

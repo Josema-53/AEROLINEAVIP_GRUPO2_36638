@@ -1,50 +1,76 @@
 ﻿@model IEnumerable<AerolineaVIP.Models.Vuelo>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Vuelos";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var ocupados = (Dictionary<int, int>)ViewBag.Ocupados;
 }
 
-<h2>Index</h2>
+<h2>Administración de vuelos</h2>
+
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <label>Fecha desde:</label>
+            <input type="date" name="desde" value="@Request.QueryString["desde"]" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label>Fecha hasta:</label>
+            <input type="date" name="hasta" value="@Request.QueryString["hasta"]" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label>Ruta:</label>
+            @Html.DropDownList("ruta", (SelectList)ViewBag.ruta, "-- Todas --", new { @class = "form-control" })
+        </div>
+        <div class="col-md-3">
+            <label>Estado:</label>
+            @Html.DropDownList("estado", (SelectList)ViewBag.estado, "-- Todos --", new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="row mt-2" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">Limpiar Filtros</a>
+        </div>
+    </div>
+</form>
 
 <p>
-    @Html.ActionLink("Create New", "Create")
+    @Html.ActionLink("Crear vuelo", "Create")
 </p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay vuelos programados con los filtros seleccionados.</div>
+}
+
 <table class="table">
     <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.FechaOperacion)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Aeronave.Matricula)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.EstadoVuelo.Descripcion)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Frecuencia.FrecuenciaId)
-        </th>
+        <th>Código</th>
+        <th>Fecha</th>
+        <th>Ruta</th>
+        <th>Horario</th>
+        <th>Aeronave</th>
+        <th>Estado</th>
+        <th>Disp.</th>
         <th></th>
     </tr>
 
 @foreach (var item in Model) {
+    int capacidad = item.Aeronave != null ? item.Aeronave.ModeloAeronave.CapacidadAsientos : 0;
+    int ocup = ocupados.ContainsKey(item.VueloId) ? ocupados[item.VueloId] : 0;
     <tr>
+        <td>@AerolineaVIP.Models.ReglasReserva.CodigoVuelo(item.VueloId)</td>
+        <td>@item.FechaOperacion.ToString("dd/MM/yyyy")</td>
+        <td>@item.Frecuencia.Ruta.Aeropuerto1.CodigoIATA → @item.Frecuencia.Ruta.Aeropuerto.CodigoIATA</td>
+        <td>@item.Frecuencia.HoraSalida.ToString("hh\\:mm") – @item.Frecuencia.HoraLlegada.ToString("hh\\:mm")</td>
+        <td>@(item.Aeronave != null ? item.Aeronave.Matricula : "Sin asignar")</td>
+        <td>@item.EstadoVuelo.Descripcion</td>
+        <td>@(item.Aeronave != null ? (capacidad - ocup) + "/" + capacidad : "—")</td>
         <td>
-            @Html.DisplayFor(modelItem => item.FechaOperacion)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Aeronave.Matricula)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.EstadoVuelo.Descripcion)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Frecuencia.FrecuenciaId)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.VueloId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.VueloId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.VueloId })
+            @Html.ActionLink("Editar", "Edit", new { id=item.VueloId }) |
+            @Html.ActionLink("Detalles", "Details", new { id=item.VueloId }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id=item.VueloId })
         </td>
     </tr>
 }

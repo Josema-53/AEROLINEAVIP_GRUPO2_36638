@@ -1,0 +1,95 @@
+﻿@model AerolineaVIP.Models.BusquedaVuelosViewModel
+@{
+    ViewBag.Title = "Buscar vuelos";
+}
+
+<h2>Buscar vuelos</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        @using (Html.BeginForm("Resultados", "Vuelos", FormMethod.Get, new { id = "formBusqueda" }))
+        {
+            <p class="text-muted">Los campos marcados con * son obligatorios.</p>
+            @Html.ValidationSummary(true, "", new { @class = "text-danger", role = "alert" })
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    @Html.LabelFor(m => m.OrigenId, new { @class = "form-label" }) *
+                    @Html.DropDownListFor(m => m.OrigenId, (SelectList)ViewBag.OrigenId, "Seleccionar origen", new { @class = "form-select" })
+                    @Html.ValidationMessageFor(m => m.OrigenId, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-6 mb-3">
+                    @Html.LabelFor(m => m.DestinoId, new { @class = "form-label" }) *
+                    @Html.DropDownListFor(m => m.DestinoId, (SelectList)ViewBag.DestinoId, "Seleccionar destino", new { @class = "form-select" })
+                    @Html.ValidationMessageFor(m => m.DestinoId, "", new { @class = "text-danger" })
+                    <span id="mensajeDestino" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    @Html.LabelFor(m => m.Fecha, new { @class = "form-label" }) *
+                    @Html.TextBoxFor(m => m.Fecha, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", min = DateTime.Today.ToString("yyyy-MM-dd") })
+                    @Html.ValidationMessageFor(m => m.Fecha, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-6 mb-3">
+                    @Html.LabelFor(m => m.Pasajeros, new { @class = "form-label" }) *
+                    @Html.TextBoxFor(m => m.Pasajeros, new { @class = "form-control", type = "number", min = "1", max = "7" })
+                    <small class="text-muted">De 1 a 7</small>
+                    @Html.ValidationMessageFor(m => m.Pasajeros, "", new { @class = "text-danger d-block" })
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <input type="submit" value="Buscar" class="btn btn-dark" />
+                @Html.ActionLink("Limpiar filtros", "Buscar", "Vuelos", null, new { @class = "btn btn-outline-secondary" })
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5>Días de operación</h5>
+                <ul class="mb-0">
+                    @foreach (var linea in (List<string>)ViewBag.DiasOperacion)
+                    {
+                        <li>@linea</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(function () {
+            // El destino se filtra según las rutas activas desde el origen elegido
+            $('#OrigenId').on('change', function () {
+                var origenId = $(this).val();
+                var $destino = $('#DestinoId');
+                $destino.empty().append($('<option>').val('').text('Seleccionar destino'));
+                if (!origenId) { return; }
+                $.getJSON('@Url.Action("DestinosPorOrigen", "Vuelos")', { origenId: origenId }, function (datos) {
+                    if (datos.length === 0) {
+                        $destino.append($('<option>').val('').text('Sin destinos disponibles'));
+                    }
+                    $.each(datos, function (i, d) {
+                        $destino.append($('<option>').val(d.id).text(d.nombre));
+                    });
+                });
+            });
+
+            // Origen y destino deben ser distintos
+            $('#formBusqueda').on('submit', function (e) {
+                $('#mensajeDestino').text('');
+                if ($('#OrigenId').val() && $('#OrigenId').val() === $('#DestinoId').val()) {
+                    $('#mensajeDestino').text('El destino debe ser distinto del origen.');
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}
