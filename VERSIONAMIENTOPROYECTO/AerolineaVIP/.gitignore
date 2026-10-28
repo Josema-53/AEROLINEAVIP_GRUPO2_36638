@@ -1,0 +1,28 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Compilación
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.pdb
+
+# Paquetes NuGet (se restauran con "Restaurar paquetes NuGet")
+packages/
+!packages/repositories.config
+
+# Publicación y temporales
+PublishProfiles/
+*.publishsettings
+App_Data/*.mdf
+App_Data/*.ldf
+Thumbs.db
+Desktop.ini
+
+# Respaldo local de archivos del molde (no se versiona)
+_respaldo_original/
