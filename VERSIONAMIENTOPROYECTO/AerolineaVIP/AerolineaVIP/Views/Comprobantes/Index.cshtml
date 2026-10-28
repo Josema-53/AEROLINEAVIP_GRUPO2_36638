@@ -1,0 +1,78 @@
+﻿@model List<AerolineaVIP.Models.FilaComprobante>
+@{
+    ViewBag.Title = "Comprobantes";
+    var vista = ViewBag.Vista as AerolineaVIP.Models.ComprobanteDetalleViewModel;
+}
+
+<h2>Comprobantes</h2>
+
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <label>Desde:</label>
+            <input type="date" name="desde" value="@Request.QueryString["desde"]" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label>Hasta:</label>
+            <input type="date" name="hasta" value="@Request.QueryString["hasta"]" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label>Tipo:</label>
+            @Html.DropDownList("tipo", (SelectList)ViewBag.tipo, "-- Todos --", new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="row mt-2" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">Limpiar Filtros</a>
+        </div>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">
+        @(string.IsNullOrEmpty(Request.QueryString["tipo"]) && string.IsNullOrEmpty(Request.QueryString["desde"]) && string.IsNullOrEmpty(Request.QueryString["hasta"])
+            ? "Aún no tiene comprobantes." : "No hay comprobantes para los filtros seleccionados.")
+    </div>
+}
+else
+{
+    <table class="table">
+        <tr>
+            <th>Número</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Reserva</th>
+            <th class="text-end">Importe</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.Numero</td>
+                <td>@c.Tipo</td>
+                <td>@c.Fecha.ToString("dd/MM/yyyy")</td>
+                <td>@c.Reserva</td>
+                <td class="text-end">@(c.Importe != null ? c.Importe.Value.ToString("N2") + " USD" : "—")</td>
+                <td>@c.Estado</td>
+                <td>
+                    <a href="@Url.Action("Index", new { id = c.ComprobanteId, desde = Request.QueryString["desde"], hasta = Request.QueryString["hasta"], tipo = Request.QueryString["tipo"] })">Visualizar</a> |
+                    <a href="@Url.Action("Imprimir", new { id = c.ComprobanteId })" target="_blank">Descargar PDF</a>
+                </td>
+            </tr>
+        }
+    </table>
+}
+
+@if (vista != null)
+{
+    <h4 class="mt-4">Vista previa</h4>
+    @Html.Partial("_Comprobante", vista)
+    <p class="mt-2">
+        <a href="@Url.Action("Imprimir", new { id = vista.ComprobanteId })" target="_blank" class="btn btn-dark">Descargar PDF</a>
+        <a href="@Url.Action("Imprimir", new { id = vista.ComprobanteId })" target="_blank" class="btn btn-outline-dark">Imprimir</a>
+        <small class="text-muted ms-2">En la ventana de impresión elija «Guardar como PDF» para descargarlo.</small>
+    </p>
+}

@@ -179,4 +179,85 @@ namespace AerolineaVIP.Models
         public bool PuedeCancelar { get { return MotivoNoCancelable == null; } }
         public string AsientosTexto { get { return string.Join(", ", Detalle.Select(d => d.Asiento + " (tramo " + d.Tramo + ")")); } }
     }
+
+    // Pantalla 15: una fila de check-in (pasajero y tramo)
+    public class FilaCheckIn
+    {
+        public int AsignacionId { get; set; }
+        public string Pasajero { get; set; }
+        public string Documento { get; set; }
+        public string Vuelo { get; set; }
+        public string Ruta { get; set; }
+        public DateTime Salida { get; set; }
+        public string Asiento { get; set; }
+        public string Elegibilidad { get; set; }
+        public bool Elegible { get; set; }
+        public bool Completado { get; set; }
+        public DateTime? FechaCheckIn { get; set; }
+    }
+
+    public class CheckInViewModel
+    {
+        public CheckInViewModel()
+        {
+            Filas = new List<FilaCheckIn>();
+        }
+
+        [Display(Name = "Código de reserva")]
+        public string Codigo { get; set; }
+
+        [Display(Name = "Número de documento del pasajero")]
+        public string Documento { get; set; }
+
+        public bool Buscado { get; set; }
+        public string Mensaje { get; set; }
+        public List<FilaCheckIn> Filas { get; set; }
+    }
+
+    // Pantalla 16: comprobantes académicos
+    public class FilaComprobante
+    {
+        public int ComprobanteId { get; set; }
+        public string Numero { get; set; }
+        public string Tipo { get; set; }
+        public DateTime Fecha { get; set; }
+        public string Reserva { get; set; }
+        public decimal? Importe { get; set; }
+        public string Estado { get; set; }
+    }
+
+    public class LineaComprobante
+    {
+        public string Pasajero { get; set; }
+        public string Vuelo { get; set; }
+        public string Ruta { get; set; }
+        public DateTime Fecha { get; set; }
+        public string Asiento { get; set; }
+        public decimal Importe { get; set; }
+    }
+
+    public class ComprobanteDetalleViewModel
+    {
+        public ComprobanteDetalleViewModel()
+        {
+            Lineas = new List<LineaComprobante>();
+        }
+
+        public int ComprobanteId { get; set; }
+        public string Numero { get; set; }
+        public string Tipo { get; set; }
+        public DateTime FechaEmision { get; set; }
+        public string Estado { get; set; }
+        public string EmisorNombre { get; set; }
+        public string EmisorIdentificacion { get; set; }
+        public string EmisorDireccion { get; set; }
+        public string Leyenda { get; set; }
+        public string Cliente { get; set; }
+        public string CodigoReserva { get; set; }
+        public string EstadoCompra { get; set; }
+        public string Pago { get; set; }
+        public decimal Total { get; set; }
+        public string Moneda { get; set; }
+        public List<LineaComprobante> Lineas { get; set; }
+    }
 }

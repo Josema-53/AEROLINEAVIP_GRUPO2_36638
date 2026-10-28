@@ -1,0 +1,101 @@
+﻿@model AerolineaVIP.Models.CheckInViewModel
+@{
+    ViewBag.Title = "Check-in";
+}
+
+<h2>Check-in</h2>
+
+@if (Model.Mensaje != null)
+{
+    <div class="alert alert-info" role="alert">@Model.Mensaje</div>
+}
+
+<h5>1. Localizar reserva</h5>
+<form method="get" id="formBuscarReserva" class="mb-4">
+    <div class="row">
+        <div class="col-md-4 mb-2">
+            <label for="codigo" class="form-label">Código de reserva *</label>
+            <input type="text" id="codigo" name="codigo" value="@Model.Codigo" class="form-control" placeholder="RV00000000" maxlength="10" />
+            <span class="text-danger" id="errorCodigo"></span>
+        </div>
+        <div class="col-md-4 mb-2">
+            <label for="documento" class="form-label">Número de documento del pasajero *</label>
+            <input type="text" id="documento" name="documento" value="@Model.Documento" class="form-control" maxlength="20" />
+            <span class="text-danger" id="errorDocumento"></span>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-dark">Iniciar check-in</button>
+</form>
+
+@if (Model.Filas.Count > 0)
+{
+    <h5>2. Pasajeros</h5>
+    using (Html.BeginForm("Confirmar", "CheckIn", FormMethod.Post, new { id = "formCheckIn" }))
+    {
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="codigo" value="@Model.Codigo" />
+        <input type="hidden" name="documento" value="@Model.Documento" />
+        <table class="table">
+            <tr>
+                <th></th>
+                <th>Pasajero</th>
+                <th>Vuelo</th>
+                <th>Ruta</th>
+                <th>Salida</th>
+                <th>Asiento</th>
+                <th>Elegibilidad</th>
+                <th>Check-in</th>
+            </tr>
+            @foreach (var f in Model.Filas)
+            {
+                <tr>
+                    <td>
+                        @if (f.Elegible)
+                        {
+                            <input type="checkbox" class="form-check-input" name="asignaciones" value="@f.AsignacionId" aria-label="Registrar a @f.Pasajero en @f.Vuelo" />
+                        }
+                    </td>
+                    <td>@f.Pasajero</td>
+                    <td>@f.Vuelo</td>
+                    <td>@f.Ruta</td>
+                    <td>@f.Salida.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@f.Asiento</td>
+                    <td>@f.Elegibilidad</td>
+                    <td>@(f.Completado ? "Completado " + f.FechaCheckIn.Value.ToString("dd/MM HH:mm") : "—")</td>
+                </tr>
+            }
+        </table>
+        <span class="text-danger d-block mb-2" id="errorSeleccion"></span>
+        <button type="submit" class="btn btn-dark" @(Model.Filas.Any(f => f.Elegible) ? "" : "disabled")>Confirmar</button>
+        <a href="@Url.Action("Index", new { codigo = Model.Codigo, documento = Model.Documento })" class="btn btn-outline-dark">Consultar estado</a>
+    }
+    <p class="text-muted mt-2">El check-in se habilita 24 horas antes y se cierra 60 minutos antes de la salida de cada vuelo, y solo para reservas pagadas.</p>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#formBuscarReserva').on('submit', function (e) {
+                var correcto = true;
+                $('#errorCodigo, #errorDocumento').text('');
+                if (!/^RV\d{8}$/i.test($('#codigo').val().trim())) {
+                    $('#errorCodigo').text('El código debe tener el formato RV seguido de 8 dígitos.');
+                    correcto = false;
+                }
+                var doc = $('#documento').val().trim();
+                if (doc.length < 5 || doc.length > 20) {
+                    $('#errorDocumento').text('El documento debe tener entre 5 y 20 caracteres.');
+                    correcto = false;
+                }
+                if (!correcto) { e.preventDefault(); }
+            });
+
+            $('#formCheckIn').on('submit', function (e) {
+                if ($('input[name=asignaciones]:checked').length === 0) {
+                    $('#errorSeleccion').text('Seleccione al menos un pasajero.');
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

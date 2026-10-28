@@ -1,0 +1,30 @@
+﻿@model AerolineaVIP.Models.ComprobanteDetalleViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>@Model.Numero - Aerolínea VIP</title>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <style>
+        body { padding: 24px; }
+        @@media print {
+            .no-imprimir { display: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-imprimir mb-3">
+        <button type="button" class="btn btn-dark" onclick="window.print()">Imprimir / Guardar como PDF</button>
+        <button type="button" class="btn btn-outline-dark" onclick="window.close()">Cerrar</button>
+    </div>
+    @Html.Partial("_Comprobante", Model)
+    <script>
+        // Abre directamente el diálogo de impresión, donde se puede elegir "Guardar como PDF"
+        window.onload = function () { window.print(); };
+    </script>
+</body>
+</html>

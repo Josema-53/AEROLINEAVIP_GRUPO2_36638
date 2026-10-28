@@ -1,0 +1,43 @@
+﻿@model AerolineaVIP.Models.ComprobanteDetalleViewModel
+
+<div class="border rounded p-3 comprobante">
+    <div class="d-flex justify-content-between flex-wrap">
+        <div>
+            <h4 class="mb-1">@Model.EmisorNombre</h4>
+            <div><small>Identificación: @Model.EmisorIdentificacion</small></div>
+            <div><small>Dirección: @Model.EmisorDireccion</small></div>
+        </div>
+        <div class="text-end">
+            <h5 class="mb-1">@Model.Tipo</h5>
+            <div>N.º <strong>@Model.Numero</strong></div>
+            <div><small>Emisión: @Model.FechaEmision.ToString("dd/MM/yyyy HH:mm")</small></div>
+            <div><small>Estado: @Model.Estado</small></div>
+        </div>
+    </div>
+    <hr />
+    <div class="row mb-2">
+        <div class="col-md-6"><strong>Cliente:</strong> @Model.Cliente</div>
+        <div class="col-md-6"><strong>Reserva:</strong> @Model.CodigoReserva</div>
+        <div class="col-md-6"><strong>Pago:</strong> @Model.Pago</div>
+        <div class="col-md-6"><strong>Estado de la compra:</strong> @Model.EstadoCompra</div>
+    </div>
+    <table class="table table-sm">
+        <tr><th>Pasajero</th><th>Vuelo</th><th>Ruta</th><th>Fecha</th><th>Asiento</th><th class="text-end">Importe</th></tr>
+        @foreach (var l in Model.Lineas)
+        {
+            <tr>
+                <td>@l.Pasajero</td>
+                <td>@l.Vuelo</td>
+                <td>@l.Ruta</td>
+                <td>@l.Fecha.ToString("dd/MM/yyyy")</td>
+                <td>@l.Asiento</td>
+                <td class="text-end">@l.Importe.ToString("N2")</td>
+            </tr>
+        }
+        <tr>
+            <td colspan="5"><strong>Total</strong></td>
+            <td class="text-end"><strong>@Model.Total.ToString("N2") @Model.Moneda</strong></td>
+        </tr>
+    </table>
+    <div class="alert alert-secondary mb-0"><strong>Información:</strong> @Model.Leyenda</div>
+</div>
