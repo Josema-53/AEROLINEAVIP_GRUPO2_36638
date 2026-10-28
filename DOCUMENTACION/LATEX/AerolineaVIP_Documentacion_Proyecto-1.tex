@@ -1,0 +1,616 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{top=2.35cm,bottom=2.25cm,left=2.45cm,right=2.45cm}
+\usepackage{xcolor,booktabs,tabularx,longtable,array}
+\usepackage{fancyhdr,titlesec,tcolorbox,enumitem}
+\usepackage{amssymb} % \checkmark del mapa de cabina
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc}
+\tcbuselibrary{breakable,skins}
+\definecolor{azulvip}{HTML}{14284B}
+\definecolor{doradovip}{HTML}{C9A24B}
+\definecolor{grisvip}{HTML}{F3F5F7}
+\definecolor{bordevip}{HTML}{D7DFE9}
+\definecolor{verdeas}{HTML}{BEE6CF}
+\definecolor{moradoas}{HTML}{DBCCEE}
+\definecolor{rojoas}{HTML}{F3C1C3}
+\newcommand{\Institucion}{Universidad de las Fuerzas Armadas ESPE}
+\newcommand{\Carrera}{Tecnologías de la Información}
+\newcommand{\Asignatura}{Desarrollo Web para Integración de Tecnologías}
+\newcommand{\Docente}{JUAN FERNANDO GALARRAGA HURTADO}
+\newcommand{\NumGrupo}{2}
+\newcommand{\FechaEntrega}{28 de octubre de 2026}
+\newcommand{\Integrantes}{%
+DIEGO ALEJANDRO ALCACIEGA TIGSE\\[4pt]
+DYLAN FERNANDO CAJAS RUEDA\\[4pt]
+JOSE MARIA SANDOVAL ESPINOSA}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.48em}
+\renewcommand{\arraystretch}{1.23}
+\setcounter{tocdepth}{2}
+\titleformat{\section}{\Large\bfseries\color{azulvip}}{\thesection.}{.65em}{}[\vspace{1pt}{\color{doradovip}\titlerule}]
+\titleformat{\subsection}{\large\bfseries\color{azulvip}}{\thesubsection}{.65em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{azulvip}}{\thesubsubsection}{.65em}{}
+\titlespacing*{\section}{0pt}{18pt}{10pt}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{azulvip} Aerolínea VIP}
+\fancyhead[R]{\footnotesize\color{azulvip} Primera Entrega · Grupo \NumGrupo}
+\fancyfoot[C]{\footnotesize\color{gray} \thepage}
+\renewcommand{\headrulewidth}{.35pt}
+\setlength{\headheight}{15pt}
+\newtcolorbox{avisobox}{colback=grisvip,colframe=bordevip,boxrule=.55pt,arc=2mm,left=8pt,right=8pt,top=6pt,bottom=6pt}
+\newtcolorbox{bocetobox}[1]{enhanced,colback=white,colframe=bordevip,title={\bfseries #1},colbacktitle=azulvip,coltitle=white,boxrule=.65pt,arc=2mm,top=7pt,bottom=7pt,left=8pt,right=8pt}
+\newcommand{\caja}[1]{\fcolorbox{bordevip}{grisvip}{\strut\hspace{.35em}#1\hspace{.35em}}}
+\newcommand{\fichacampo}[2]{\noindent\textbf{\color{azulvip}#1}\enspace #2\par\vspace{3pt}}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\Repositorio}{\url{https://github.com/Josema-53/AEROLINEAVIP_GRUPO2_36638}}
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{0.9cm}
+{\color{doradovip}\rule{.95\textwidth}{1.4pt}\par}
+\vspace{.65cm}
+{\Large\bfseries\color{azulvip}
+DESARROLLO INTEGRAL DE UN SISTEMA WEB\\[6pt]
+MONOLÍTICO PARA LA COMPRA, RESERVA Y\\[6pt]
+ADMINISTRACIÓN DE PASAJES DE UNA\\[6pt]
+AEROLÍNEA VIP\par}
+\vspace{.65cm}
+{\color{doradovip}\rule{.95\textwidth}{1.4pt}\par}
+\vspace{.7cm}
+{\LARGE\bfseries\color{azulvip} Primera Entrega\par}
+\vspace{.2cm}
+{\normalsize Documentación de wireframes, interfaces y políticas del apartado 18.1\par}
+\vspace{1.4cm}
+\begin{tabularx}{.95\textwidth}{@{}>{\bfseries}p{2.6cm}X@{}}
+Institución: & \Institucion\\[9pt]
+Carrera: & \Carrera\\[9pt]
+Asignatura: & \Asignatura\\[9pt]
+Docente: & \Docente\\[9pt]
+Grupo \NumGrupo: & \begin{tabular}[t]{@{}l@{}}\Integrantes\end{tabular}\\ \noalign{\vspace{9pt}}
+Repositorio: & \Repositorio\\[9pt]
+Lugar: & Ecuador\\[9pt]
+Fecha: & \FechaEntrega
+\end{tabularx}
+\vfill
+\end{titlepage}
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Introducción y alcance del proyecto}
+El proyecto contempla un sistema web monolítico para consultar vuelos, seleccionar asientos, registrar pasajeros, gestionar reservas, simular compras y pagos, realizar check-in y administrar las operaciones de una aerolínea VIP. La flota estará conformada por tres aeronaves Embraer Phenom 300E, con un máximo de siete asientos por vuelo.
+
+El diseño se organiza en 21 interfaces con navegación, campos, validaciones y estados definidos. También se desarrollan las políticas del sistema que deben acordarse antes de cerrar el diseño funcional. Las decisiones pendientes se presentan de manera diferenciada para facilitar su revisión.
+
+\subsection{Tecnologías previstas}
+\begin{tabularx}{\textwidth}{@{}p{3.3cm}X@{}}
+\toprule
+\textbf{Componente} & \textbf{Tecnología o criterio propuesto}\\\midrule
+Plataforma & ASP.NET Framework 4.8.1 con arquitectura MVC monolítica.\\
+Presentación & Vistas Razor, Bootstrap, jQuery y diseño adaptable.\\
+Autenticación & ASP.NET Identity y base de identidad \texttt{AerolineaVIP\_Identity}.\\
+Datos de dominio & SQL Server, base \texttt{AerolineaVIP}.\\
+Control de versiones & GitHub para gestionar cambios en el desarrollo. Repositorio: \Repositorio.\\
+Comprobantes & PDF académicos vinculados a los registros del sistema, sin validez tributaria.\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Alcance del sistema}
+El diseño contempla las 21 pantallas, las validaciones de formularios tanto en cliente como en servidor, la integridad de datos, las reglas de negocio, la autorización por roles y el límite de siete plazas por vuelo. Se diferencia claramente entre buscar, seleccionar, reservar, pagar y confirmar, para evitar que el usuario interprete una selección temporal como una compra concluida.
+
+No se contemplan el dashboard de indicadores, la auditoría, la concurrencia avanzada y los bloqueos de asientos, la fase formal de pruebas, el mantenimiento ni el despliegue dentro del alcance delimitado. La pantalla 17 se mantiene como acceso a las funciones administrativas. Se prevén únicamente pagos simulados y comprobantes académicos.
+
+
+\section{Wireframes e interfaces}
+\subsection{Criterios de diseño de las 21 pantallas}
+Las 21 interfaces se organizan en cuatro áreas: pública, cliente, atención asistida (counter) y administración. En cada pantalla se definen los campos, las acciones principales y secundarias, las validaciones, los mensajes de error y la navegación. Las interfaces mantienen una organización común de encabezado, contenido y acciones, diferenciando la consulta pública de las operaciones autenticadas.
+
+Las pantallas 1 y 6 priorizan la consulta rápida de vuelos e itinerarios. Las pantallas 8 a 11 muestran un proceso guiado de cuatro pasos: asientos, pasajeros, reserva y pago. En toda la aplicación se utilizarán etiquetas visibles, controles accesibles por teclado, mensajes descriptivos y adaptación para equipos de escritorio y móviles.
+
+\subsection{Aplicación del documento común de wireframes}
+El grupo incorpora como base el documento común \textit{Wireframes\_21\_Interfaces\_Aerolinea\_VIP.pdf} entregado por el docente. Ese documento se adopta como esqueleto funcional: de él se toman, para cada una de las 21 pantallas, los campos, su formato y obligatoriedad, las acciones, las validaciones de cliente y servidor, los mensajes, los estados vacíos y de carga, los permisos y las tablas o vistas relacionadas. Lo que se describe en esta sección no reemplaza esas especificaciones, sino que indica cómo se aplican en el diseño propio del grupo.
+
+\begin{tabularx}{\textwidth}{@{}p{3.6cm}X@{}}
+\toprule
+\textbf{Aspecto} & \textbf{Aplicación del grupo}\\\midrule
+Contenido funcional & Se conserva sin cambios en las 21 pantallas: campos, botones, validaciones, mensajes (11.4.7), reglas A1--A5 de accesibilidad y notas N1--N4 de implementación.\\
+Numeración y rutas & Se mantienen los números 1--21 y las rutas sugeridas (apartado 2.8).\\
+Identidad visual & Diseño propio: azul oscuro, dorado, blanco y gris claro (apartado 2.3). Los wireframes en escala de grises se transforman a esta paleta.\\
+Navegación & Barra superior fija en \texttt{\_Layout.cshtml}; menú desplegable en móvil. Indicador de pasos 1--4 en las pantallas 8 a 11.\\
+Componentes & Tarjetas para resultados de vuelos (pantalla 6) y reservas en móvil (13); modales de Bootstrap para confirmar el pago (11) y la cancelación (14); pestañas por tramo (8) y por módulo (18, 20).\\
+Mapa de asientos & Se conserva la distribución del Phenom 300E (proa a la izquierda, puerta en la posición 1I, mesas entre las filas 2 y 3) y la semántica obligatoria: verde disponible, morado reservado, rojo ocupado; borde negro y marca para la selección actual.\\
+Adaptación (11.4.6) & Se aplican las variantes de escritorio, tableta y móvil del documento común; en móvil el avión se muestra vertical con la proa arriba.\\
+Exclusiones & Pantalla 17 solo como página de accesos (sin dashboard); sin auditoría ni bloqueos de asientos.\\
+Decisiones pendientes & Donde el documento común remite a DP-01 a DP-15, el diseño aplica la política propuesta por el grupo en la sección 3.\\\bottomrule
+\end{tabularx}
+
+\subsection{Identidad visual y distribución propuesta}
+Se plantea una identidad sobria con azul oscuro \texttt{\#14284B}, acentos dorados \texttt{\#C9A24B}, blanco y gris claro \texttt{\#F3F5F7}. La barra superior contendrá «AEROLÍNEA VIP», Inicio, Vuelos y Mi cuenta; las opciones restringidas se mostrarán únicamente a quien disponga de los permisos correspondientes. Los formularios se organizarán en columnas en escritorio y en una sola columna en móvil.
+
+La estructura compartida \texttt{\_Layout.cshtml} concentrará navegación, pie, estilos y scripts. Los avisos, los estados vacíos, los resúmenes de compra y las confirmaciones de acciones sensibles se mostrarán con componentes consistentes.
+
+\subsection{Mapa de navegación propuesto}
+Se respeta la organización del apartado 11.4.2 del enunciado y del documento común de wireframes.
+
+\begin{avisobox}
+\centering\textbf{Inicio (1)}\\[2pt]
+Búsqueda (5--7) \quad Acceso (2) \quad Registro (3) \quad Recuperación (4)
+\end{avisobox}
+\begin{tabularx}{\textwidth}{@{}XX@{}}
+\toprule
+\textbf{Área pública} & \textbf{Área del cliente}\\\midrule
+1. Inicio; 2. Inicio de sesión; 3. Registro; 4. Recuperación de acceso; 5--7. Consulta de vuelos e itinerarios. & Perfil (cuenta de Identity); 8, 9, 10, 13 y 14. Reservas; 11--12. Compras y pagos; 15--16. Check-in y comprobantes.\\\midrule
+\textbf{Área de counter} & \textbf{Área administrativa}\\\midrule
+Consulta autorizada (13 asistida y consulta acotada de 20); asistencia en 8--12 y 15 en nombre del cliente; seguimiento de operaciones en 14 y 16. & 17. Accesos; 18. Vuelos e itinerarios; 19. Aeronaves y asignaciones; 20. Usuarios, pasajeros y reservas; 21. Consultas y reportes (sin auditoría).\\\bottomrule
+\end{tabularx}
+
+La consulta pública de disponibilidad no autoriza por sí sola una reserva. El acceso a operaciones de clientes, empleados o administradores requerirá comprobar sesión, rol y titularidad en el servidor. Counter no dispone de permisos administrativos generales.
+
+\begin{tabularx}{\textwidth}{@{}p{2cm}p{2cm}X@{}}
+\toprule
+\textbf{Etapa} & \textbf{Pantallas} & \textbf{Resultado previsto}\\\midrule
+Consulta & 5 $\to$ 6 $\to$ 7 & Vuelo, itinerario y asientos disponibles.\\
+Asientos & 8 & Selección temporal por pasajero y tramo.\\
+Pasajeros & 9 & Registro y validación de los datos.\\
+Reserva & 10 & Reserva PENDIENTE y plazas reservadas.\\
+Pago & 11 & Pago simulado, con resultado aprobado o rechazado.\\
+Resultado & 12, 13, 16 & Confirmación, estado persistido y comprobante cuando corresponda.\\\bottomrule
+\end{tabularx}
+
+\subsection{Esquemas de interfaces principales}
+Los esquemas muestran cómo el grupo aplica su identidad visual a tres pantallas representativas: la página de inicio, los resultados de búsqueda y la selección de asientos. Conservan los campos y las acciones de los wireframes del documento común; el resto de pantallas sigue directamente las especificaciones de ese documento con la misma identidad visual.
+
+\begin{bocetobox}{Pantalla 1 · Inicio (\texttt{/Home/Index})}
+\centering
+\caja{AEROLÍNEA VIP}\hfill \caja{Inicio}\quad\caja{Vuelos}\quad\caja{Mi cuenta $\blacktriangledown$}\\[10pt]
+\fbox{\parbox{.92\linewidth}{\centering\vspace{6pt}\textbf{Vuela a tu próximo destino}\\[2pt]
+\small Viajes privados con atención personalizada.\\[8pt]
+\textbf{Encuentra tu vuelo}\\[4pt]
+\caja{Origen * Quito}\enspace\caja{Destino *}\enspace\caja{Fecha de salida *}\enspace\caja{Pasajeros * (1--7)}\\[8pt]
+\caja{\textbf{Buscar vuelos}}\\[5pt]
+\footnotesize Horarios sujetos a la programación establecida y disponibilidad real.\vspace{6pt}}}\\[8pt]
+\begin{tabularx}{.92\linewidth}{@{}XXX@{}}
+\caja{Guayaquil} & \caja{Manta} & \caja{Galápagos}\\
+\footnotesize Martes, jueves y sábado & \footnotesize Lunes, miércoles y viernes & \footnotesize Domingo · escala en GYE\\
+\end{tabularx}\\[4pt]
+\small Pie compartido (\texttt{\_Layout}). «Mi cuenta» muestra Iniciar sesión / Registrarse al visitante anónimo.
+\end{bocetobox}
+
+\begin{bocetobox}{Pantalla 6 · Resultados de búsqueda y horarios (\texttt{/Vuelos/Resultados})}
+\centering
+\textbf{Resultados de vuelos}\\[2pt]
+\small Quito $\to$ Guayaquil · fecha seleccionada · 2 pasajeros\hfill\caja{Modificar búsqueda}\\[6pt]
+\raggedright\caja{Filtro de horario: Todos $\blacktriangledown$}\\[6pt]
+\centering\footnotesize
+\begin{tabularx}{.98\linewidth}{@{}>{\raggedright\arraybackslash}Xr@{}}\toprule
+\textbf{Vuelo o itinerario} & \textbf{Acciones}\\\midrule
+\textbf{09:00--10:00} · Directo\newline VIP00031 · 5 de 7 disponibles & \caja{Ver detalles}\,\caja{Consultar disponibilidad}\,\caja{Seleccionar vuelo}\\[3pt]
+\textbf{19:00--20:00} · Directo\newline VIP00033 · Sin asientos disponibles & \caja{Consultar disponibilidad}\,\caja{\color{gray}Seleccionar vuelo}\\[3pt]
+\textbf{Quito $\to$ Galápagos} · 1 escala en GYE\newline Tramo 1: 4 disp. · Tramo 2: 4 disp. & \caja{Ver detalles}\,\caja{Seleccionar}\\\bottomrule
+\end{tabularx}\\[4pt]
+\small «Seleccionar vuelo» exige sesión; sin aeronave asignada el vuelo no se ofrece como comercializable.
+\end{bocetobox}
+
+\begin{bocetobox}{Pantallas 7--8 · Disponibilidad y selección de asientos}
+\centering
+\small\textbf{1 Asientos} · 2 Pasajeros · 3 Reserva · 4 Pago\\[4pt]
+\caja{\textbf{Tramo 1 · UIO $\to$ GYE 09:00}}\,\caja{Tramo 2 · GYE $\to$ GPS 11:00}\\[6pt]
+\footnotesize
+\begin{tabularx}{.98\linewidth}{@{}lXlX@{}}
+\toprule
+Vuelo & VIP00042 & Aeronave & AV-03 · Phenom 300E\\
+Fecha · horario & 08/11/2026 · 09:00--10:00 & Capacidad · disponibles & 7 asientos · 4 disponibles\\\bottomrule
+\end{tabularx}\\[8pt]
+\small Esquema de cabina: cuatro asientos a la derecha y tres a la izquierda\\[7pt]
+\begin{tikzpicture}[x=1.15cm,y=1cm,font=\footnotesize]
+\draw[rounded corners=13pt,thick,draw=bordevip,fill=grisvip!30] (-4.25,-1.19) rectangle (4.25,1.19);
+\node[font=\scriptsize,align=center] at (-3.73,.05) {Cabina\\de mando};
+\draw[draw=bordevip,thin] (-3.20,-.96)--(-3.20,.96);
+\node[font=\tiny,align=center] at (3.76,.66) {Baño};
+\node[font=\tiny,align=center] at (3.76,-.64) {Equipaje/\\servicio};
+\draw[draw=bordevip,thin] (3.23,-.96)--(3.23,.96);
+% Lado derecho: proa a la izquierda.
+\node[draw=bordevip,fill=rojoas,minimum width=.80cm,minimum height=.48cm] at (-2.48,.68) {1D};
+\node[draw=bordevip,fill=verdeas,minimum width=.80cm,minimum height=.48cm] at (-.86,.68) {2D};
+\node[draw=black,line width=1.15pt,fill=verdeas,minimum width=.80cm,minimum height=.48cm] at (.79,.68) {3D};
+\node[font=\tiny] at (1.17,.92) {\checkmark};
+\node[draw=bordevip,fill=verdeas,minimum width=.80cm,minimum height=.48cm] at (2.45,.68) {4D};
+% Lado izquierdo: puerta en la primera fila; no existe 1I.
+\node[font=\scriptsize,align=center] at (-2.48,-.70) {Puerta de\\acceso};
+\node[draw=bordevip,fill=moradoas,minimum width=.80cm,minimum height=.48cm] at (-.86,-.68) {2I};
+\node[draw=bordevip,fill=verdeas,minimum width=.80cm,minimum height=.48cm] at (.79,-.68) {3I};
+\node[draw=bordevip,fill=rojoas,minimum width=.80cm,minimum height=.48cm] at (2.45,-.68) {4I};
+\node[font=\tiny] at (.0,.68) {Mesa};
+\node[font=\tiny] at (.0,-.68) {Mesa};
+\node[font=\scriptsize,text=azulvip] at (.03,0) {PASILLO};
+\end{tikzpicture}\\[6pt]
+\small Verde: disponible; morado: reservado; rojo: ocupado. El borde negro y la marca identifican la selección actual. En la interfaz, cada asiento muestra además su estado escrito, no solo el color.\\[7pt]
+\begin{tabularx}{.98\linewidth}{@{}Xll@{}}
+\toprule
+\textbf{Resumen de la selección} & \textbf{Tramo 1} & \textbf{Tramo 2}\\\midrule
+Pasajero 1 (activo) & 3D · ventanilla der. & ---\\
+Pasajero 2 & --- & ---\\\bottomrule
+\end{tabularx}\\[5pt]
+\raggedright\footnotesize\textbf{Información:} su selección es temporal; la reserva se registra al confirmar en el paso 3.\\[5pt]
+\centering\caja{Actualizar disponibilidad}\enspace\caja{Quitar selección}\enspace\caja{\textbf{Continuar}}\enspace\caja{Regresar}\\[3pt]
+\small En la pantalla 7 el mapa es de solo consulta; la selección y el resumen aparecen en la pantalla 8.
+\end{bocetobox}
+
+\subsection{Estados de asientos y validaciones}
+La pantalla 7 consultará la disponibilidad y la pantalla 8 permitirá realizar la selección. La nomenclatura de cabina será \textbf{1D, 2D, 2I, 3D, 3I, 4D y 4I}, conforme a la configuración prevista. Cada asiento se relacionará con el número interno correspondiente y su estado será calculado a partir de los datos del vuelo, no mediante colores codificados como disponibilidad fija en el HTML.
+
+\begin{tabularx}{\textwidth}{@{}p{3.05cm}Xp{2.15cm}@{}}
+\toprule
+\textbf{Representación} & \textbf{Significado} & \textbf{Selección}\\\midrule
+Verde · Disponible & No existe asignación vigente; CANCELADA o LIBERADA no ocupan inventario. & Permitida.\\
+Morado · Reservado & Asignación PENDIENTE, sin pago aprobado. & No permitida.\\
+Rojo · Ocupado & Asignación CONFIRMADA, vinculada con compra pagada. & No permitida.\\
+Verde + borde y marca & Selección temporal aún no registrada como reserva. & Puede retirarse.\\\bottomrule
+\end{tabularx}
+
+Antes de confirmar una reserva se volverá a verificar la disponibilidad; una selección previa no crea bloqueos. Para cada tramo del itinerario se requiere un asiento válido para cada pasajero. El mapa de cabina mantendrá sus códigos, la puerta en la posición 1I y los estados tanto en vista horizontal de escritorio como en distribución vertical de móvil.
+
+\subsection{Mensajes y tratamiento de errores}
+\begin{tabularx}{\textwidth}{@{}p{4cm}X@{}}
+\toprule
+\textbf{Situación} & \textbf{Tratamiento previsto}\\\midrule
+Dato vacío o formato inválido & Mensaje junto al campo y conservación de los datos correctos.\\
+Sin vuelos coincidentes & Aviso informativo con opción de modificar la búsqueda.\\
+Asiento ocupado durante la operación & Advertencia, reconsulta y posibilidad de cambiar el asiento.\\
+Reserva registrada & Código y estado PENDIENTE, sin confundirlo con un pago.\\
+Pago rechazado o pendiente & Estado explícito y opción de reintento cuando proceda.\\
+Sesión expirada o acceso denegado & Solicitud de autenticación o aviso sin exponer datos ajenos.\\
+Conflicto de aeronave & Advertencia y rechazo de una asignación operativa incompatible.\\\bottomrule
+\end{tabularx}
+
+\subsection{Inventario de interfaces y rutas propuestas}
+Se conserva el identificador de cada pantalla. Las rutas siguientes son propuestas de organización MVC y podrán ajustarse durante la revisión técnica.
+
+\small
+\begin{longtable}{@{}p{.75cm}p{6.4cm}p{7cm}@{}}
+\toprule
+\textbf{N.º} & \textbf{Pantalla} & \textbf{Ruta prevista}\\\midrule\endfirsthead
+\toprule\textbf{N.º}&\textbf{Pantalla}&\textbf{Ruta prevista}\\\midrule\endhead
+1 & Página de inicio & \texttt{/Home/Index} \\
+2 & Inicio de sesión & \texttt{/Account/Login} \\
+3 & Registro de usuarios & \texttt{/Account/Register} \\
+4 & Recuperación de acceso & \texttt{/Account/ForgotPassword} \\
+5 & Búsqueda de vuelos & \texttt{/Vuelos/Buscar} \\
+6 & Resultados de búsqueda y horarios & \texttt{/Vuelos/Resultados} \\
+7 & Consulta de disponibilidad de asientos & \texttt{/Vuelos/Disponibilidad/\{vueloId\}} \\
+8 & Selección de vuelo y asiento & \texttt{/Reservas/SeleccionAsiento/\{vueloId\}} \\
+9 & Registro de datos del pasajero & \texttt{/Reservas/Pasajeros} \\
+10 & Reserva de pasajes & \texttt{/Reservas/Confirmar} \\
+11 & Proceso de compra y pago & \texttt{/Compras/Pagar/\{reservaId\}} \\
+12 & Confirmación de compra o reserva & \texttt{/Compras/Confirmacion/\{reservaId\}} \\
+13 & Consulta de reservas & \texttt{/Reservas/MisReservas} \\
+14 & Gestión de reservas y cancelaciones & \texttt{/Reservas/Gestionar/\{reservaId\}} \\
+15 & Check-in & \texttt{/CheckIn/Index} \\
+16 & Visualización de comprobantes & \texttt{/Comprobantes/Index} \\
+17 & Panel del administrador (accesos) & \texttt{/Admin/Index} \\
+18 & Administración de vuelos e itinerarios & \texttt{/Admin/Vuelos} \\
+19 & Administración de aeronaves & \texttt{/Admin/Aeronaves} \\
+20 & Gestión de usuarios, pasajeros y reservas & \texttt{/Admin/Gestion} \\
+21 & Consultas y reportes administrativos & \texttt{/Admin/Reportes} \\
+\bottomrule
+\end{longtable}
+\normalsize
+\subsection{Criterios funcionales del sistema}
+El registro público permitirá crear cuentas de cliente, pero nunca autoasignar roles de administrador o superusuario. Los nombres y apellidos se validarán en el servidor; la recuperación de contraseña se planteará como demostración académica sin exposición pública de tokens.
+
+La gestión comercial diferenciará el inventario por vuelo y tramo. Las reservas PENDIENTES retendrán asientos cuando se registren; los pagos aprobados transformarán las asignaciones en CONFIRMADAS. Las políticas de plazo, cancelación y check-in están sujetas a aprobación, al igual que las reglas de operación de counter y los importes de simulación.
+
+Las tres aeronaves compartirán un esquema de siete plazas. En administración se distinguirán la configuración de vuelos, la gestión de aeronaves y las consultas tabulares, sin incorporar un dashboard ni auditoría.
+
+\subsubsection*{Roles del sistema}
+Los roles se crean mediante código en el punto de inicialización de ASP.NET Identity, junto con los usuarios iniciales y su asignación de roles. El registro público solo crea cuentas con rol Cliente.
+
+\begin{tabularx}{\textwidth}{@{}p{2.6cm}Xp{3.6cm}@{}}
+\toprule
+\textbf{Rol} & \textbf{Alcance} & \textbf{Pantalla tras iniciar sesión}\\\midrule
+SuperUsuario & Todas las funciones permitidas, incluida la asignación de roles (pantallas 3 y 20). Creado por código. & 17 · Accesos\\
+Administrador & Operaciones CRUD autorizadas de vuelos, aeronaves, usuarios, pasajeros y reservas, y reportes (17--21). No asigna roles. Creado por código. & 17 · Accesos\\
+Counter & Atención asistida según DP-13 (8--16 y consulta acotada de 20). Sin acceso a 17, 18, 19 ni 21. & 5 · Búsqueda de vuelos\\
+Cliente & Compra, reservas, pagos simulados, check-in y comprobantes propios (8--16). & 13 · Mis reservas\\\bottomrule
+\end{tabularx}
+
+\subsubsection*{Estados de reserva, compra y pago}
+Los estados se administran por separado (RNP-06):
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+\item \textbf{Reserva:} PENDIENTE, CONFIRMADA, EXPIRADA, CANCELADA.
+\item \textbf{Asignación de asiento (ReservaPasajeroVuelo):} PENDIENTE, CONFIRMADA, LIBERADA, CANCELADA.
+\item \textbf{Compra:} PENDIENTE, PAGADA, ANULADA.
+\item \textbf{Pago simulado:} PENDIENTE, APROBADO, RECHAZADO, REVERSADO. El simulador registra directamente el resultado final (APROBADO o RECHAZADO), por lo que el estado PENDIENTE del catálogo no se utiliza en esta entrega.
+\end{itemize}
+El mensaje «Pago pendiente» de 11.4.7 se muestra cuando la \emph{Compra} está PENDIENTE y aún no tiene un Pago APROBADO.
+
+\clearpage
+\section{Políticas del proyecto: registro de decisiones pendientes (18.1)}
+Se presentan quince decisiones pendientes con su contexto, la política propuesta, su justificación, las consecuencias funcionales y las restricciones que deben respetarse. Ninguna se considera aprobada: las condiciones numéricas son supuestos académicos sujetos a confirmación.
+
+Se mantienen como condiciones de diseño la flota de tres Phenom 300E, el límite de siete pasajeros por vuelo, la continuidad de los itinerarios, el uso de MVC monolítico e Identity, y la distinción entre estados de reserva, compra y pago. Los aspectos de recuperación y normativa (DP-14 y DP-15) se registran sin atribuir al prototipo capacidades fuera del alcance.
+\subsection{DP-01. Aeropuerto específico de Galápagos}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No existe una aprobación definitiva del aeropuerto insular. GPS aparece en los datos preliminares como supuesto.}
+\fichacampo{2. Necesidad de la decisión.}{Itinerario ambiguo y dificultades para validar conexiones. Se relaciona con R-05: conexiones de Galápagos inviables.}
+\fichacampo{3. Política propuesta.}{Usar GPS (Aeropuerto Ecológico Seymour) únicamente como supuesto académico identificable. Mantenerlo en el catálogo de aeropuertos y no convertirlo en una definición operativa aprobada.}
+\fichacampo{Alternativas evaluadas.}{Se descarta inventar un segundo aeropuerto o sustituir el código sin un criterio documentado. También se descarta mostrar solamente “Galápagos” sin identificar el punto de llegada.}
+\fichacampo{4. Justificación.}{Mantener identificado el aeropuerto de destino aporta claridad a la búsqueda de vuelos y a la validación de las conexiones.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-01: todo tramo identifica un aeropuerto de origen y uno de destino mediante sus claves; el tramo siguiente parte del destino anterior. Respeta RN-06 y RNP-05.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 1, 5, 6, 8 y 18. Catálogo Aeropuerto; claves de Ruta; Itinerario y TramoItinerario. La búsqueda y el resumen mostrarán código y nombre.}
+\fichacampo{7. Consecuencias para las operaciones.}{Los usuarios distinguen el aeropuerto de llegada. El responsable operativo debe confirmar las condiciones antes de considerar una publicación comercial real.}
+\fichacampo{Restricciones de la propuesta.}{No modificar los cuatro tramos dominicales, los horarios ni la flota. No afirmar viabilidad operacional ni cumplimiento regulatorio.}
+\fichacampo{8. Aprobación requerida.}{Sí. La elección definitiva afecta la ruta y las conexiones; requiere validación del docente o responsable del proyecto.}
+}
+\clearpage
+\subsection{DP-02. Asignación de los tres jets}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se cuenta con una asignación semanal aprobada que acredite la posición y disponibilidad de cada aeronave.}
+\fichacampo{2. Necesidad de la decisión.}{Conflictos horarios e imposibilidad de ejecutar algunos vuelos. Se relaciona con R-02.}
+\fichacampo{3. Política propuesta.}{Conservar AV-01, AV-02 y AV-03 como unidades independientes. Para cada fecha se propone asignar una aeronave disponible solo después de comprobar ubicación inicial, destino previo y el intervalo operativo de DP-03. Para la demostración, la ubicación inicial de cada aeronave al comenzar el día se registra como parámetro de supuesto (por defecto, UIO para las tres), y la aeronave queda en el destino de su último vuelo asignado. Si falta esa información, conservar el vuelo sin asignación comercializable.}
+\fichacampo{Alternativas evaluadas.}{Se descarta copiar como definitiva la asignación de demostración y asignar únicamente por rotación numérica. Tampoco se agregan aeronaves para resolver conflictos.}
+\fichacampo{4. Justificación.}{La existencia de tres jets no prueba que cualquier secuencia sea viable. La validación por aeronave permite detectar incompatibilidades sin cambiar los itinerarios oficiales.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-02: ningún asiento se comercializa sin aeronave asignada y validación de continuidad e intervalos. La asignación de ejemplo no acredita disponibilidad real. Respeta RN-01, RN-02, RN-03, RNP-01 y RNP-02.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 6, 7, 18 y 19. Intervienen las entidades Vuelo y Aeronave, así como la vista vw\_VueloDetalle. La validación de continuidad complementará el control de superposición.}
+\fichacampo{7. Consecuencias para las operaciones.}{Puede haber vuelos no comercializables mientras se verifica la programación. El plan semanal definitivo exige posición inicial y tiempos de preparación y traslado; no se declara viable una matriz aún inexistente.}
+\fichacampo{Restricciones de la propuesta.}{Flota de tres jets del modelo indicado; sin horarios nuevos ni traslados comerciales inventados. La asignación de aeronaves no altera los criterios de continuidad y disponibilidad establecidos.}
+\fichacampo{8. Aprobación requerida.}{Sí. La asignación necesita validación operativa; los datos de muestra no la sustituyen. Mientras no se apruebe, la ubicación inicial se implementa como parámetro identificado como supuesto.}
+}
+\clearpage
+\subsection{DP-03. Tiempos de preparación y desplazamiento}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{El horario de vuelo no define los márgenes de preparación, disponibilidad posterior ni desplazamiento entre aeropuertos.}
+\fichacampo{2. Necesidad de la decisión.}{Asignaciones formalmente separadas que no son operativamente viables. Se relaciona con R-02.}
+\fichacampo{3. Política propuesta.}{Para la demostración, proponer parámetros de 30 minutos antes de la salida y 30 minutos después de la llegada. El intervalo se considera desde salida menos 30 hasta llegada más 30, con fin exclusivo. Un aeropuerto de llegada distinto del siguiente origen requiere un traslado validado; sin duración aprobada se rechaza la asignación propuesta.}
+\fichacampo{Alternativas evaluadas.}{Se descarta usar margen cero o suponer desplazamientos instantáneos. Se descarta modificar horarios oficiales para acomodar un conflicto.}
+\fichacampo{4. Justificación.}{Los márgenes hacen verificable el supuesto y permiten sustituirlo sin cambiar reglas dispersas. Son valores académicos, no tiempos certificados para la aeronave.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-03: dos intervalos de la misma aeronave son incompatibles si el inicio de uno es anterior al fin del otro y viceversa. Respetar RNP-02 y RN-04 a RN-06.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantalla 18; Frecuencia, Vuelo y vw\_VueloDetalle. El trigger actual compara salida y llegada, sin estos márgenes; se requiere validación adicional del servicio con parámetros de configuración.}
+\fichacampo{7. Consecuencias para las operaciones.}{Las asignaciones pueden rechazarse aunque los vuelos no se superpongan directamente. El traslado queda condicionado a información operativa, sin diseñar mantenimiento aeronáutico.}
+\fichacampo{Restricciones de la propuesta.}{No aumentar flota ni cambiar días u horas. No introducir controles de horas de pilotos, certificaciones ni mantenimiento.}
+\fichacampo{8. Aprobación requerida.}{Sí. Los márgenes y traslados determinan la elegibilidad de una asignación y deben validarse. Mientras no se aprueben, los 30 minutos se implementan como parámetros de configuración, no como valores fijos en el código.}
+}
+\clearpage
+\subsection{DP-04. Tarifas y moneda}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se ha aprobado una matriz comercial de precios ni criterios de variación de tarifas.}
+\fichacampo{2. Necesidad de la decisión.}{No se puede determinar el importe real de una compra. Se relaciona con R-04.}
+\fichacampo{3. Política propuesta.}{Proponer USD y mantener para la simulación 450,00 por pasajero y tramo UIO-GYE, GYE-UIO, UIO-MEC o MEC-UIO; 650,00 para GYE-GPS o GPS-GYE. Calcular el total como suma de importes de tramo por pasajero, sin descuentos o recargos no definidos.}
+\fichacampo{Alternativas evaluadas.}{Se descarta tratar 450 o 650 como precio de todo itinerario o aceptar importes enviados por el navegador.}
+\fichacampo{4. Justificación.}{Los valores coinciden con el conjunto de demostración y permiten revisar los cálculos. Un viaje de ida UIO-GYE-GPS suma 1.100,00 USD por pasajero; los cuatro tramos dominicales (ida y regreso) suman 2.200,00 USD por pasajero.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-04: copiar la tarifa vigente al campo ImporteTramo al registrar la reserva y calcular Compra.Importe en servidor. Un cambio posterior de tarifa no reescribe operaciones existentes. Respeta RNP-06 y RN-10.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 6, 10, 11, 12 y 16; Ruta.TarifaReferencial, ReservaPasajeroVuelo.ImporteTramo, Compra.Importe y MonedaCodigo.}
+\fichacampo{7. Consecuencias para las operaciones.}{El cliente conoce un total reproducible y el equipo puede explicar la suma por pasajeros y tramos. Estos importes no representan precios de mercado ni tarifas autorizadas.}
+\fichacampo{Restricciones de la propuesta.}{Solo pagos simulados. Las tarifas son ejemplos adoptados como propuesta; no afirmar aprobación comercial.}
+\fichacampo{8. Aprobación requerida.}{Sí. La tarifa y la moneda son decisiones comerciales pendientes, aunque se utilicen valores de ejemplo. Mientras no se aprueben, las tarifas se leen de Ruta.TarifaReferencial y no se escriben en el código.}
+}
+\clearpage
+\subsection{DP-05. Impuestos y comprobantes}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No están aprobados los conceptos tributarios, los datos reales del emisor ni el tipo de documento comercial.}
+\fichacampo{2. Necesidad de la decisión.}{Inconsistencias comerciales o tributarias. Se relaciona con R-04.}
+\fichacampo{3. Política propuesta.}{Emitir únicamente comprobantes académicos con la leyenda “Comprobante académico de una operación simulada. No constituye factura tributaria ni documento autorizado”. Usar numeración secuencial propia por tipo, sin simular autorización fiscal: ACAD-000001 para el comprobante de venta académico, CNF-000001 para la confirmación de reserva y NC-ACAD-000001 para la nota de crédito académica de DP-08, conforme a los datos de ejemplo del script. No añadir una tasa tributaria inventada al total académico.}
+\fichacampo{Alternativas evaluadas.}{Se descarta presentar el PDF como factura autorizada o afirmar que la operación real está exenta de impuestos.}
+\fichacampo{4. Justificación.}{El alcance admite documentar una simulación, pero no resolver obligaciones legales. La leyenda evita confundir los datos de demostración con una emisión tributaria.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-05: cada comprobante se vincula a una compra y se genera con datos persistidos y numeración única; un comprobante de venta no acredita pago si Compra no está PAGADA. Respeta RNP-06 y RN-07.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantalla 16; Comprobante, TipoComprobante, DatosEmisor y vw\_ComprobanteDetalle. El código interno FACTURA se presenta al usuario como comprobante de venta académico.}
+\fichacampo{7. Consecuencias para las operaciones.}{El cliente obtiene un resumen identificable de pasajeros, tramos y pagos simulados; no obtiene un documento fiscal válido.}
+\fichacampo{Restricciones de la propuesta.}{Sin datos fiscales inventados, certificaciones ni afirmaciones de cumplimiento. La ausencia de cálculo tributario en el prototipo no define una tasa legal de cero.}
+\fichacampo{8. Aprobación requerida.}{Sí. Se requiere validar el formato académico y los datos de emisor de la demostración.}
+}
+\clearpage
+\subsection{DP-06. Proveedor de pagos}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se ha seleccionado un proveedor financiero; el alcance exige pagos simulados.}
+\fichacampo{2. Necesidad de la decisión.}{No puede completarse la integración financiera real. En la simulación deben evitarse pagos duplicados o inconsistentes (R-03).}
+\fichacampo{3. Política propuesta.}{Utilizar un simulador local con dos resultados posibles: APROBADO y RECHAZADO. El resultado se determina por los últimos cuatro dígitos del número de tarjeta: si son «0000», el pago se registra como RECHAZADO; en cualquier otro caso, como APROBADO. El sufijo de rechazo es un parámetro configurable. No se verifica la existencia de la tarjeta ni se conecta con entidades financieras. Cerrar el modal de confirmación sin pagar no registra ningún pago, y un rechazo no confirma la reserva.}
+\fichacampo{Alternativas evaluadas.}{Se descarta integrar un banco o consultar tarjetas reales. Se descarta un resultado aleatorio, porque no es reproducible en la demostración; un selector «Aprobar/Rechazar» en pantalla, porque deja sin función el formulario de tarjeta; y rechazar según el importe, porque mezcla la simulación con tarifas aún pendientes (DP-04).}
+\fichacampo{4. Justificación.}{La regla es determinista y verificable: el sistema guarda los últimos cuatro dígitos, de modo que cualquier resultado puede explicarse con los datos persistidos. Funciona igual con las cuatro marcas, cuyas longitudes son distintas (16, 16, 15 y 14 dígitos).}
+\fichacampo{Números de prueba (ficticios).}{Aprobado: Visa 4000 0000 0000 1111; Mastercard 5100 0000 0000 2222; American Express 3400 000000 03333; Diners Club 3000 000000 4444. Rechazado: los mismos prefijos terminados en 0000. La pantalla 11 muestra la ayuda «Para simular un rechazo use una tarjeta terminada en 0000».}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-06: antes de simular, la reserva debe estar PENDIENTE, vigente y con Compra no pagada; en caso contrario no se crea ningún Pago. Solo un Pago APROBADO por Compra; al aprobar, actualizar Compra a PAGADA, Reserva a CONFIRMADA y asignaciones a CONFIRMADA en una operación íntegra. Un Pago RECHAZADO deja Compra y Reserva en PENDIENTE. Una solicitud repetida sobre una Compra ya PAGADA devuelve el resultado existente sin crear otro Pago. Respeta RNP-06 y RNP-10.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 11 y 12; Pago, Compra, Reserva, ReservaPasajeroVuelo, MetodoPago y MarcaTarjeta; índice UX\_Pago\_AprobadoPorCompra. CodigoOperacion (SIM-\{CodigoReserva\}-\{intento\}) identifica cada intento simulado.}
+\fichacampo{7. Consecuencias para las operaciones.}{El rechazo permite reintentar si la reserva sigue vigente. La aprobación vuelve rojos los asientos confirmados; no se produce ningún cobro.}
+\fichacampo{Restricciones de la propuesta.}{EsSimulado siempre vale 1. Guardar solo marca, últimos cuatro dígitos, titular y código de operación; nunca el número completo, el vencimiento ni el código de seguridad. Sin bloqueos avanzados.}
+\fichacampo{8. Aprobación requerida.}{Sí. Deben validarse la regla de simulación y los efectos de cada resultado en las reservas y compras. Mientras no se apruebe, el sufijo de rechazo se mantiene como parámetro de configuración.}
+}
+\clearpage
+\subsection{DP-07. Duración de una reserva pendiente}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{El plazo de retención de la reserva PENDIENTE y la liberación de sus asientos no están aprobados.}
+\fichacampo{2. Necesidad de la decisión.}{Asientos retenidos indefinidamente o liberados antes de tiempo; relación con inventario y R-01.}
+\fichacampo{3. Política propuesta.}{Proponer retención de 30 minutos desde la creación, limitada por la salida del primer tramo: FechaExpiracion es el menor de ambos instantes. No registrar reservas si ese instante no es posterior a la creación. Antes de consultar inventario, confirmar una reserva o pagar, procesar las expiraciones aplicables con la hora del servidor.}
+\fichacampo{Alternativas evaluadas.}{Se descarta retención indefinida y depender exclusivamente de un contador del navegador.}
+\fichacampo{4. Justificación.}{Un plazo visible permite completar el pago y evita retener asientos sin límite. La evaluación en servidor evita que cerrar la página mantenga vigente una reserva caducada.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-07: si ahora alcanza FechaExpiracion y la reserva sigue PENDIENTE sin pago aprobado, pasar a EXPIRADA y sus asignaciones a LIBERADA; anular la compra PENDIENTE si existe. No expirar reservas CONFIRMADA. Respeta RNP-03, RNP-06 y RNP-07.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 7, 8, 10, 11, 13 y 14; Reserva.FechaExpiracion, estados de ReservaPasajeroVuelo y Compra. La expiración de reservas se resolverá en la lógica de aplicación, con la hora del servidor.}
+\fichacampo{7. Consecuencias para las operaciones.}{El cliente ve el vencimiento y puede perder la retención si no paga a tiempo. Los asientos se muestran disponibles después de persistir la liberación, no solo por acabar un contador.}
+\fichacampo{Restricciones de la propuesta.}{Sin mecanismos de bloqueo temporal durante la selección ni servicios de despliegue fuera del alcance; revalidación e integridad básicas en servidor.}
+\fichacampo{8. Aprobación requerida.}{Sí. El plazo modifica la disponibilidad; mientras no se apruebe, los 30 minutos se implementan como parámetro de configuración.}
+}
+\clearpage
+\subsection{DP-08. Cancelaciones y reembolsos}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se han aprobado ventanas de cancelación, reembolsos ni penalizaciones.}
+\fichacampo{2. Necesidad de la decisión.}{Liberación incorrecta de asientos y consecuencias económicas no autorizadas. Se relaciona con R-03 y R-04.}
+\fichacampo{3. Política propuesta.}{Solo se admite la cancelación total del itinerario reservado. (a) Reserva PENDIENTE: puede cancelarse en cualquier momento antes de la salida del primer tramo, sin costo. (b) Reserva CONFIRMADA con Compra PAGADA: puede cancelarse hasta 24 horas antes de la salida del primer tramo y siempre que ningún pasajero tenga check-in COMPLETADO; se aplica un reverso simulado del 100~\% del importe, sin penalización. Fuera de esa ventana la solicitud se rechaza con su motivo. Cada solicitud se resuelve en el momento (se ejecuta o se rechaza); no quedan solicitudes en espera.}
+\fichacampo{Alternativas evaluadas.}{Se descarta cancelar parcialmente un itinerario, liberar asientos de una compra pagada sin regular el pago, y aplicar penalizaciones porcentuales que requieren una decisión comercial no disponible. También se descarta dejar solicitudes en espera de aprobación manual, porque exigirían nuevas tablas y un flujo de revisión fuera del alcance.}
+\fichacampo{4. Justificación.}{La cancelación total evita que un itinerario quede parcialmente actualizado. La ventana de 24 horas coincide con la apertura del check-in (DP-12), de modo que una plaza no puede liberarse cuando ya podría haberse registrado el embarque. Resolver cada solicitud en el momento permite trabajar con las tablas existentes.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-08: (a) Reserva PENDIENTE → Reserva y asignaciones CANCELADA; Compra PENDIENTE, si existe, ANULADA. (b) Reserva CONFIRMADA dentro de la ventana → Reserva y asignaciones CANCELADA, Compra ANULADA, Pago APROBADO REVERSADO y emisión de nota de crédito académica (DP-05), todo en una operación íntegra. Se conservan importes e identificadores. No se cancelan reservas EXPIRADA o CANCELADA. Respeta RNP-06 y RNP-07.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 13 y 14; Reserva, ReservaPasajeroVuelo, Compra, Pago, Comprobante y CheckIn (para verificar que no haya check-in completado). La pantalla 14 muestra las condiciones y el modal de confirmación con los asientos que se liberarán. No se incorporan tablas adicionales.}
+\fichacampo{7. Consecuencias para las operaciones.}{Los asientos cancelados vuelven a mostrarse en verde. El cliente conoce antes de confirmar si su cancelación procede y con qué efecto. Ningún reverso implica una devolución real de dinero.}
+\fichacampo{Restricciones de la propuesta.}{Se exige identificar al titular o personal autorizado (DP-13). Sin reembolsos reales ni penalizaciones.}
+\fichacampo{8. Aprobación requerida.}{Sí. La ventana, el porcentaje de reverso y la ausencia de penalización son decisiones comerciales; mientras no se aprueben se implementan como parámetros (24 horas y 100~\%).}
+}
+\clearpage
+\subsection{DP-09. Comercialización de tramos individuales}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se define cuáles segmentos del itinerario con escala se venden separadamente.}
+\fichacampo{2. Necesidad de la decisión.}{Duplicación de plazas entre viajes completos y tramos separados. Se relaciona con R-05.}
+\fichacampo{3. Política propuesta.}{Vender el itinerario dominical completo (UIO-GYE-GPS a la ida y GPS-GYE-UIO al regreso). Además, admitir la venta individual únicamente de los tramos GYE-GPS y GPS-GYE. Los tramos dominicales UIO-GYE y GYE-UIO solo se venden como parte del itinerario a Galápagos. En todos los casos se utiliza exactamente el mismo VueloId por tramo, sin copiar vuelos ni crear inventarios alternativos. Un viaje con dos tramos requiere cupo para todos los pasajeros en ambos.}
+\fichacampo{Alternativas evaluadas.}{Se descarta mantener cupos independientes para paquetes y segmentos, o vender un tramo que no pertenece a la programación existente. Se descarta vender por separado el tramo dominical UIO-GYE, porque crearía en la práctica una oferta Quito--Guayaquil en domingo, mientras RN-04 establece que esa ruta opera martes, jueves y sábado.}
+\fichacampo{4. Justificación.}{Compartir inventario evita que una plaza vendida dentro de un itinerario vuelva a aparecer disponible en una venta individual. Limitar la venta individual a los tramos insulares atiende a quien ya está en Guayaquil sin alterar la oferta de las rutas confirmadas.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-09: toda plaza se identifica por VueloId y NumeroAsiento; su asignación vigente es única, con independencia del producto comercial. Cada secuencia mantiene origen, destino y orden. Respeta RN-06, RNP-03, RNP-04 y RNP-05.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 5, 6, 8 y 10; Itinerario, TramoItinerario, Vuelo y ReservaPasajeroVuelo. En la pantalla 5, Guayaquil aparece como origen hacia Galápagos y Galápagos como origen hacia Guayaquil solo en domingo. La confirmación de varios tramos se realiza íntegra o se rechaza.}
+\fichacampo{7. Consecuencias para las operaciones.}{Un tramo puede agotarse antes que otro; el viaje completo deja de ofrecerse si cualquiera de sus segmentos no tiene suficientes plazas.}
+\fichacampo{Restricciones de la propuesta.}{No modificar los cuatro vuelos del domingo, ni duplicar capacidad, ni permitir conexiones discontinuas, ni ampliar los días de operación de Quito--Guayaquil.}
+\fichacampo{8. Aprobación requerida.}{Sí. La oferta de segmentos es una decisión comercial; hasta aprobarla se mantiene como propuesta identificada y la venta individual de tramos insulares se habilita mediante un parámetro.}
+}
+\clearpage
+\subsection{DP-10. Condiciones de conexión en Guayaquil}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se ha aprobado un tiempo mínimo de conexión ni el criterio temporal para interpretar horarios entre localidades.}
+\fichacampo{2. Necesidad de la decisión.}{Conexiones que no cumplen requisitos operativos. Se relaciona con R-05.}
+\fichacampo{3. Política propuesta.}{Proponer, únicamente para el calendario académico de los datos de muestra, un mínimo configurable de 60 minutos entre llegada a GYE y salida del tramo siguiente. Usar una misma referencia temporal de servidor para ese calendario; cualquier interpretación de horas locales deberá validarse antes de cambiarla.}
+\fichacampo{Alternativas evaluadas.}{Se descarta aceptar cualquier diferencia no negativa como conexión suficiente y desplazar las salidas oficiales para corregir una conexión.}
+\fichacampo{4. Justificación.}{Los horarios suministrados dejan 60 minutos en GYE tanto a la ida (10:00 a 11:00) como al regreso (17:00 a 18:00). Adoptar ese margen permite verificar el ejemplo, sin asegurar viabilidad operativa real.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-10: el destino anterior coincide con el origen siguiente y la diferencia es al menos 60 minutos en la referencia temporal acordada. Respeta RN-06 y RNP-05.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 6, 8 y 18; TramoItinerario, Frecuencia y vw\_VueloDetalle. El trigger verifica continuidad y orden temporal, pero no incorpora el mínimo de 60 minutos; el servicio deberá validarlo.}
+\fichacampo{7. Consecuencias para las operaciones.}{Una conexión que no cumple el margen no se ofrece como itinerario elegible. El cliente visualiza por separado cada tramo y su espera.}
+\fichacampo{Restricciones de la propuesta.}{No alterar horarios ni prometer viabilidad. El tratamiento de zonas horarias y los requisitos operativos reales siguen pendientes de validación.}
+\fichacampo{8. Aprobación requerida.}{Sí. Deben aprobarse el margen y la interpretación temporal; los valores de los datos de muestra no prueban viabilidad real. Mientras no se aprueben, los 60 minutos se implementan como parámetro de configuración.}
+}
+\clearpage
+\subsection{DP-11. Configuración física de los asientos}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{La numeración y distribución de cabina aparecen como propuesta, sin aprobación definitiva.}
+\fichacampo{2. Necesidad de la decisión.}{Asignaciones a asientos inexistentes o incorrectos. Afecta la capacidad y la claridad del proceso de reserva.}
+\fichacampo{3. Política propuesta.}{Adoptar los siete códigos de los datos de muestra: 1D, 2D, 2I, 3D, 3I, 4D y 4I, asociados respectivamente a los números internos 1 a 7. Compartir la distribución del modelo entre las tres aeronaves.}
+\fichacampo{Alternativas evaluadas.}{Se descarta crear una cabina simétrica de ocho plazas o usar etiquetas distintas en pantalla y base de datos.}
+\fichacampo{4. Justificación.}{La correspondencia explícita entre códigos visuales y datos evita asignar por error asientos diferentes al registrar una reserva.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-11: solo se admiten asientos existentes en el modelo de la aeronave asignada; el máximo es siete por vuelo. Mostrar código y estado textual además del color. Respeta RN-02, RN-03 y RNP-03.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 7, 8 y 19; Asiento, ModeloAeronave, vw\_AsientoAeronave y vw\_EstadoAsientoVuelo. La vista obtiene la nomenclatura del servidor.}
+\fichacampo{7. Consecuencias para las operaciones.}{Clientes y personal identifican inequívocamente las plazas. La orientación cambia en móvil, pero no sus códigos ni su estado.}
+\fichacampo{Restricciones de la propuesta.}{No añadir un asiento 1I ni un octavo asiento; no atribuir al prototipo una certificación de distribución de cabina.}
+\fichacampo{8. Aprobación requerida.}{Sí. La distribución y los códigos de asientos deben validarse antes de considerarlos definitivos.}
+}
+\clearpage
+\subsection{DP-12. Política de check-in}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se ha aprobado la ventana de apertura y cierre ni el tratamiento de excepciones.}
+\fichacampo{2. Necesidad de la decisión.}{Ventanas temporales y condiciones de elegibilidad ambiguas; podrían registrarse pasajeros sin una compra pagada.}
+\fichacampo{3. Política propuesta.}{Proponer apertura 24 horas antes y cierre 60 minutos antes de la salida de cada vuelo. Admitir el inicio de la ventana y excluir su instante de cierre. Exigir reserva confirmada, compra pagada, asignación CONFIRMADA y coincidencia del documento; sin excepciones manuales en el alcance definido.}
+\fichacampo{Alternativas evaluadas.}{Se descarta check-in para una reserva pendiente y una ventana ilimitada. Se descarta validar todos los tramos con la hora de salida del primero.}
+\fichacampo{4. Justificación.}{La elegibilidad por tramo mantiene relación con cada vuelo y permite explicar claramente por qué un pasajero puede registrarse en uno y aún no en otro.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-12: solo registrar CheckIn COMPLETADO cuando salida menos 24 horas sea menor o igual a ahora y ahora sea anterior a salida menos 60 minutos; debe existir una única inscripción vigente por asignación. Respeta RN-07 y RNP-06.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantalla 15; CheckIn, ReservaPasajeroVuelo, Reserva, Compra y vw\_VueloDetalle; UX\_CheckIn\_Vigente. La ventana se valida en aplicación: el trigger solo exige asignación confirmada.}
+\fichacampo{7. Consecuencias para las operaciones.}{El pasajero obtiene un estado persistido o un motivo concreto de rechazo. El personal de counter utiliza las mismas condiciones y no elude la ventana.}
+\fichacampo{Restricciones de la propuesta.}{Parámetros académicos, sin controles regulatorios o habilitaciones aeronáuticas. No confundir check-in con comprobante de pago.}
+\fichacampo{8. Aprobación requerida.}{Sí. La ventana afecta elegibilidad y atención al cliente, por lo que requiere aprobación. Mientras no se apruebe, la apertura (24 horas) y el cierre (60 minutos) se implementan como parámetros.}
+}
+\clearpage
+\subsection{DP-13. Funciones exactas del counter}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No están definidos los límites de las operaciones asistidas y el acceso a información de clientes.}
+\fichacampo{2. Necesidad de la decisión.}{Exceso o insuficiencia de permisos para empleados. Se relaciona con R-06: acceso indebido a datos personales.}
+\fichacampo{3. Política propuesta.}{Proponer que Counter asista búsqueda, selección, pasajeros, reserva, pago simulado, consulta, solicitud de cancelación, check-in y comprobantes. La consulta de terceros exige código de reserva y documento coincidentes; la creación asistida exige seleccionar un cliente existente y verificar su identificación. No habilitar listados generales de usuarios. Los permisos se definen por función; la diferenciación por ubicación (aeropuerto del counter) no se aplica en esta entrega. Tras iniciar sesión, Counter llega a la pantalla 5.}
+\fichacampo{Alternativas evaluadas.}{Se descarta conceder el rol Administrador a todo empleado o permitir acceso por conocer únicamente el identificador de una reserva.}
+\fichacampo{4. Justificación.}{La atención asistida puede realizarse sin conceder gestión de flota, roles o reportes globales. Se conserva el principio de permiso efectivo en servidor.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-13: autorizar cada acción y cada reserva; una reserva asistida pertenece al UsuarioId del cliente identificado, no al empleado. Counter no asigna roles ni modifica vuelos, aeronaves o tarifas. Respeta RN-09 y RNP-09.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Pantallas 8 a 16 y consulta acotada de 20. AspNetRoles, AspNetUserRoles y Reserva.UsuarioId. La pantalla 13 del cliente sigue filtrando únicamente sus reservas; el acceso asistido usa una acción separada y restringida.}
+\fichacampo{7. Consecuencias para las operaciones.}{El personal puede atender al cliente sin apropiarse de su reserva. El Administrador conserva CRUD permitido y el SuperUsuario la asignación de privilegios.}
+\fichacampo{Restricciones de la propuesta.}{Autorización en servidor y mínima exposición de datos. Sin matriz documental de permisos ni módulo de auditoría. Counter no accede al panel 17 ni a reportes globales.}
+\fichacampo{8. Aprobación requerida.}{Sí. Los permisos del empleado requieren definición explícita del docente o responsable.}
+}
+\clearpage
+\subsection{DP-14. Recuperación y disponibilidad del sistema}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se han definido RPO, RTO, infraestructura, responsables de recuperación ni ventanas de servicio.}
+\fichacampo{2. Necesidad de la decisión.}{Pérdida de datos o interrupciones prolongadas. Se relaciona con R-07.}
+\fichacampo{3. Política propuesta.}{Registrar la decisión y diferir su definición técnica: mantenimiento y despliegue están excluidos del proyecto. No fijar valores de RPO/RTO sin conocer las necesidades ni declarar un procedimiento de recuperación implantado.}
+\fichacampo{Alternativas evaluadas.}{Se descarta prometer disponibilidad continua o tiempos de recuperación arbitrarios. También se descarta omitir la decisión del registro.}
+\fichacampo{4. Justificación.}{El aplazamiento explícito respeta el alcance y hace visible la información que necesitará una etapa posterior.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-14 (criterio documental de alcance): no presentar objetivos de recuperación como alcanzados sin aprobación y evidencia. No se deriva una nueva regla transaccional; se mantienen RN-08 y las reglas existentes de integridad.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{No incorpora pantallas ni nuevas tablas al alcance definido. Una definición futura abarcaría AerolineaVIP, AerolineaVIP\_Identity y sus dependencias.}
+\fichacampo{7. Consecuencias para las operaciones.}{Para resolverla harán falta tolerancia a pérdida de información, tiempo máximo de interrupción, volumen de datos, recursos de alojamiento y responsables de operación.}
+\fichacampo{Restricciones de la propuesta.}{Sin tareas de mantenimiento, despliegue, certificaciones ni compromisos de servicio dentro del alcance definido.}
+\fichacampo{8. Aprobación requerida.}{Sí, para establecer los objetivos en una etapa posterior. Su registro como asunto fuera de alcance no constituye aprobación de una política técnica.}
+}
+\clearpage
+\subsection{DP-15. Normativa aplicable}
+{\color{doradovip}\rule{\textwidth}{.5pt}}
+\textbf{Estado:} Pendiente de aprobación del docente.\par\vspace{4pt}
+{\normalsize
+\fichacampo{1. Situación pendiente.}{No se han determinado las obligaciones jurídicas o aeronáuticas aplicables a una operación real.}
+\fichacampo{2. Necesidad de la decisión.}{Incumplimiento de obligaciones jurídicas o aeronáuticas, según el registro oficial.}
+\fichacampo{3. Política propuesta.}{Mantener los controles regulatorios fuera del alcance funcional definido y no declarar cumplimiento jurídico ni aeronáutico. La aplicación conserva su carácter académico, los datos ficticios, los pagos simulados y los comprobantes sin valor tributario.}
+\fichacampo{Alternativas evaluadas.}{Se descarta asumir cumplimiento por utilizar validaciones de formularios, o inventar documentos y certificaciones para viajes a Galápagos.}
+\fichacampo{4. Justificación.}{Las validaciones académicas no reemplazan una revisión por responsables competentes. Mantener la distinción evita presentar el prototipo como sistema habilitado para operar comercialmente.}
+\fichacampo{5. Reglas de negocio relacionadas.}{RG-15 (criterio de alcance): ninguna interfaz o comprobante del prototipo afirmará autorización regulatoria. Se mantienen RN-07 a RN-10 dentro del alcance académico; no se añaden requisitos regulatorios a RN/RNP.}
+\fichacampo{6. Consecuencias para interfaces, procesos y datos.}{Sin controles ni tablas regulatorias adicionales. Se conserva la pantalla 9 con los campos previstos y la leyenda académica de 11 y 16; no se amplía la captura de datos de Galápagos.}
+\fichacampo{7. Consecuencias para las operaciones.}{Una etapa posterior necesita jurisdicción, tipo de servicio, condiciones de operación, tratamiento de datos personales y criterio de responsables jurídicos y aeronáuticos.}
+\fichacampo{Restricciones de la propuesta.}{No proponer certificaciones, revisar horas de pilotos, habilitaciones ni mantenimiento por horas de vuelo. No afirmar cumplimiento jurídico o tributario.}
+\fichacampo{8. Aprobación requerida.}{Sí, en una fase posterior con el docente y responsables competentes. No se formula una solución normativa en el alcance definido.}
+}
+\clearpage
+\subsection{Tabla resumen de las decisiones}
+Las propuestas siguientes sintetizan el criterio de diseño. Su implementación queda condicionada a revisión cuando se requiera aprobación.
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{1.05cm}>{\raggedright\arraybackslash}p{2.55cm}>{\raggedright\arraybackslash}p{4.5cm}>{\raggedright\arraybackslash}p{3.65cm}>{\raggedright\arraybackslash}p{1.45cm}>{\raggedright\arraybackslash}p{1.45cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Decisión} & \textbf{Política propuesta (resumen)} & \textbf{Pantallas / datos} & \textbf{Requiere aprobación} & \textbf{Estado}\\\midrule\endfirsthead
+\toprule\textbf{ID} & \textbf{Decisión} & \textbf{Política propuesta (resumen)} & \textbf{Pantallas / datos} & \textbf{Requiere aprobación} & \textbf{Estado}\\\midrule\endhead
+DP-01 & Aeropuerto específico de Galápagos. & GPS (Seymour) como supuesto académico identificable; se muestran código y nombre. & 1, 5, 6, 8, 18; Aeropuerto, Ruta, TramoItinerario & Sí & Pendiente\\
+DP-02 & Asignación de los tres jets. & Asignar cada jet tras verificar ubicación, destino previo e intervalos; ubicación inicial como parámetro (UIO). & 6, 7, 18, 19; Vuelo, Aeronave & Sí & Pendiente\\
+DP-03 & Tiempos de preparación y desplazamiento. & 30 min antes y después (fin exclusivo); traslados sin duración aprobada se rechazan. & 18; Frecuencia, Vuelo, vw\_VueloDetalle & Sí & Pendiente\\
+DP-04 & Tarifas y moneda. & USD; 450,00 por pasajero y tramo continental y 650,00 por tramo insular; total en servidor. & 6, 10, 11, 12, 16; Ruta, RPV.ImporteTramo, Compra & Sí & Pendiente\\
+DP-05 & Impuestos y comprobantes. & Comprobantes académicos ACAD, CNF y NC con leyenda; sin tasas inventadas. & 16; Comprobante, vw\_ComprobanteDetalle & Sí & Pendiente\\
+DP-06 & Proveedor de pagos. & Simulador local: tarjeta terminada en 0000 = RECHAZADO; otra = APROBADO. & 11, 12; Pago, Compra, Reserva, MarcaTarjeta & Sí & Pendiente\\
+DP-07 & Duración de una reserva pendiente. & 30 min desde la creación, sin exceder la primera salida; expiración con hora del servidor. & 7, 8, 10, 11, 13, 14; Reserva.FechaExpiracion & Sí & Pendiente\\
+DP-08 & Cancelaciones y reembolsos. & Cancelación total: pendiente antes de salir; pagada hasta 24 h antes, sin check-in, con reverso simulado del 100~\%. & 13, 14; Reserva, RPV, Compra, Pago, Comprobante & Sí & Pendiente\\
+DP-09 & Comercialización de tramos individuales. & Itinerario completo y tramos GYE-GPS / GPS-GYE; inventario compartido por VueloId. & 5, 6, 8, 10; Itinerario, TramoItinerario, RPV & Sí & Pendiente\\
+DP-10 & Condiciones de conexión en Guayaquil. & Mínimo de 60 min entre llegada a GYE y salida siguiente, en una misma referencia temporal. & 6, 8, 18; TramoItinerario, Frecuencia & Sí & Pendiente\\
+DP-11 & Configuración física de los asientos. & Siete códigos 1D, 2D, 2I, 3D, 3I, 4D, 4I, números 1--7; sin asiento 1I. & 7, 8, 19; Asiento, vw\_EstadoAsientoVuelo & Sí & Pendiente\\
+DP-12 & Política de check-in. & Apertura 24 h antes y cierre 60 min antes de cada vuelo; solo asignaciones CONFIRMADA. & 15; CheckIn, RPV, UX\_CheckIn\_Vigente & Sí & Pendiente\\
+DP-13 & Funciones exactas del counter. & Atención asistida con código de reserva y documento; sin roles, flota ni reportes globales. & 8--16, 20 acotada; AspNetUserRoles, Reserva.UsuarioId & Sí & Pendiente\\
+DP-14 & Recuperación y disponibilidad del sistema. & Registrar y diferir RPO/RTO; fuera del alcance de la entrega. & Sin pantallas; ambas bases de datos & Sí (etapa posterior) & Pendiente\\
+DP-15 & Normativa aplicable. & No declarar cumplimiento legal ni aeronáutico; revisión con responsables competentes. & 9, 11, 16 (leyendas) & Sí (etapa posterior) & Pendiente\\
+\bottomrule
+\end{longtable}
+\renewcommand{\arraystretch}{1.23}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+RPV: ReservaPasajeroVuelo.
+\section{Conclusiones}
+El diseño organiza las 21 interfaces, sus rutas previstas, el flujo de navegación, la representación de los siete asientos y los criterios de validación y mensajes. Las quince decisiones del apartado 18.1 permiten establecer las condiciones de reservas, pagos simulados, administración e integridad de datos.
+
+Las decisiones comerciales y operativas que aún requieren aprobación se mantienen identificadas. Su validación permitirá precisar los parámetros del sistema y consolidar el diseño sin modificar los horarios, la capacidad ni las condiciones establecidas para el proyecto.
+\end{document}
