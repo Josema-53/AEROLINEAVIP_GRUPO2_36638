@@ -15,12 +15,14 @@ namespace AerolineaVIP.Controllers
         private AerolineaVIPContext db = new AerolineaVIPContext();
 
         // GET: MetodoPagos
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
             return View(db.MetodoPago.ToList());
         }
 
         // GET: MetodoPagos/Details/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Details(string id)
         {
             if (id == null)
@@ -36,6 +38,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: MetodoPagos/Create
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
             return View();
@@ -46,6 +49,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "Codigo,Nombre,Activo")] MetodoPago metodoPago)
         {
             if (ModelState.IsValid)
@@ -59,6 +63,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: MetodoPagos/Edit/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit(string id)
         {
             if (id == null)
@@ -78,6 +83,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "Codigo,Nombre,Activo")] MetodoPago metodoPago)
         {
             if (ModelState.IsValid)
@@ -90,6 +96,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: MetodoPagos/Delete/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Delete(string id)
         {
             if (id == null)
@@ -107,6 +114,7 @@ namespace AerolineaVIP.Controllers
         // POST: MetodoPagos/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult DeleteConfirmed(string id)
         {
             MetodoPago metodoPago = db.MetodoPago.Find(id);

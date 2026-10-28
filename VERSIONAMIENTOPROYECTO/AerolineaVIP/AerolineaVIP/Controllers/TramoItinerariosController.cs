@@ -15,6 +15,7 @@ namespace AerolineaVIP.Controllers
         private AerolineaVIPContext db = new AerolineaVIPContext();
 
         // GET: TramoItinerarios
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
             var tramoItinerario = db.TramoItinerario.Include(t => t.Itinerario).Include(t => t.Vuelo);
@@ -22,6 +23,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: TramoItinerarios/Details/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Details(int? id)
         {
             if (id == null)
@@ -37,6 +39,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: TramoItinerarios/Create
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
             ViewBag.ItinerarioId = new SelectList(db.Itinerario, "ItinerarioId", "Referencia");
@@ -49,6 +52,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "TramoItinerarioId,ItinerarioId,VueloId,Orden")] TramoItinerario tramoItinerario)
         {
             if (ModelState.IsValid)
@@ -64,6 +68,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: TramoItinerarios/Edit/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -85,6 +90,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "TramoItinerarioId,ItinerarioId,VueloId,Orden")] TramoItinerario tramoItinerario)
         {
             if (ModelState.IsValid)
@@ -99,6 +105,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: TramoItinerarios/Delete/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -116,6 +123,7 @@ namespace AerolineaVIP.Controllers
         // POST: TramoItinerarios/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult DeleteConfirmed(int id)
         {
             TramoItinerario tramoItinerario = db.TramoItinerario.Find(id);

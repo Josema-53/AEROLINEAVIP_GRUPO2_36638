@@ -15,6 +15,7 @@ namespace AerolineaVIP.Controllers
         private AerolineaVIPContext db = new AerolineaVIPContext();
 
         // GET: Reservas
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
             var reserva = db.Reserva.Include(r => r.EstadoReserva);
@@ -22,6 +23,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Reservas/Details/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Details(int? id)
         {
             if (id == null)
@@ -37,6 +39,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Reservas/Create
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
             ViewBag.EstadoReservaCodigo = new SelectList(db.EstadoReserva, "Codigo", "Descripcion");
@@ -48,6 +51,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "ReservaId,CodigoReserva,UsuarioId,FechaCreacion,FechaExpiracion,EstadoReservaCodigo")] Reserva reserva)
         {
             if (ModelState.IsValid)
@@ -62,6 +66,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Reservas/Edit/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -82,6 +87,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "ReservaId,CodigoReserva,UsuarioId,FechaCreacion,FechaExpiracion,EstadoReservaCodigo")] Reserva reserva)
         {
             if (ModelState.IsValid)
@@ -95,6 +101,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Reservas/Delete/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -112,6 +119,7 @@ namespace AerolineaVIP.Controllers
         // POST: Reservas/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult DeleteConfirmed(int id)
         {
             Reserva reserva = db.Reserva.Find(id);

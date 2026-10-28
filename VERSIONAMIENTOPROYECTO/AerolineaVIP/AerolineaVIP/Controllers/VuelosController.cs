@@ -15,6 +15,7 @@ namespace AerolineaVIP.Controllers
         private AerolineaVIPContext db = new AerolineaVIPContext();
 
         // GET: Vuelos
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
             var vuelo = db.Vuelo.Include(v => v.Aeronave).Include(v => v.EstadoVuelo).Include(v => v.Frecuencia);
@@ -22,6 +23,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Vuelos/Details/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Details(int? id)
         {
             if (id == null)
@@ -37,6 +39,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Vuelos/Create
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
             ViewBag.AeronaveId = new SelectList(db.Aeronave, "AeronaveId", "Matricula");
@@ -50,6 +53,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "VueloId,FrecuenciaId,FechaOperacion,AeronaveId,EstadoVueloCodigo")] Vuelo vuelo)
         {
             if (ModelState.IsValid)
@@ -66,6 +70,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Vuelos/Edit/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -88,6 +93,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "VueloId,FrecuenciaId,FechaOperacion,AeronaveId,EstadoVueloCodigo")] Vuelo vuelo)
         {
             if (ModelState.IsValid)
@@ -103,6 +109,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Vuelos/Delete/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -120,6 +127,7 @@ namespace AerolineaVIP.Controllers
         // POST: Vuelos/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult DeleteConfirmed(int id)
         {
             Vuelo vuelo = db.Vuelo.Find(id);

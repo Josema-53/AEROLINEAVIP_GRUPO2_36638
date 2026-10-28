@@ -57,6 +57,11 @@ namespace AerolineaVIP.Controllers
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
+            // Si ya inició sesión y llega aquí, es porque intentó entrar a una sección sin permiso
+            if (User.Identity.IsAuthenticated)
+            {
+                return View("AccesoDenegado");
+            }
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
@@ -75,10 +80,29 @@ namespace AerolineaVIP.Controllers
 
             // No cuenta los errores de inicio de sesión para el bloqueo de la cuenta
             // Para permitir que los errores de contraseña desencadenen el bloqueo de la cuenta, cambie a shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, shouldLockout: false);
+            // Se permite ingresar con el nombre de usuario o con el correo
+            var nombreUsuario = model.UserName.Trim();
+            if (nombreUsuario.Contains("@"))
+            {
+                var usuarioPorCorreo = await UserManager.FindByEmailAsync(nombreUsuario);
+                if (usuarioPorCorreo != null)
+                {
+                    nombreUsuario = usuarioPorCorreo.UserName;
+                }
+            }
+
+            var result = await SignInManager.PasswordSignInAsync(nombreUsuario, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
                 case SignInStatus.Success:
+                    if (string.IsNullOrEmpty(returnUrl))
+                    {
+                        var usuario = await UserManager.FindByNameAsync(nombreUsuario);
+                        if (await UserManager.IsInRoleAsync(usuario.Id, "SuperUsuario") || await UserManager.IsInRoleAsync(usuario.Id, "Administrador"))
+                        {
+                            return RedirectToAction("Index", "Admin");
+                        }
+                    }
                     return RedirectToLocal(returnUrl);
                 case SignInStatus.LockedOut:
                     return View("Lockout");
@@ -86,7 +110,7 @@ namespace AerolineaVIP.Controllers
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
                 case SignInStatus.Failure:
                 default:
-                    ModelState.AddModelError("", "Intento de inicio de sesión no válido.");
+                    ModelState.AddModelError("", "Usuario o contraseña incorrectos.");
                     return View(model);
             }
         }
@@ -139,7 +163,13 @@ namespace AerolineaVIP.Controllers
         [AllowAnonymous]
         public ActionResult Register()
         {
-            return View();
+            // Un usuario con sesión solo puede registrar cuentas si es SuperUsuario
+            if (User.Identity.IsAuthenticated && !User.IsInRole("SuperUsuario"))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            CargarRoles("Cliente");
+            return View(new RegisterViewModel { Rol = "Cliente" });
         }
 
         //
@@ -149,27 +179,67 @@ namespace AerolineaVIP.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Register(RegisterViewModel model)
         {
+            if (User.Identity.IsAuthenticated && !User.IsInRole("SuperUsuario"))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            // El rol se decide en el servidor: el registro público nunca asigna roles elevados
+            string rol = "Cliente";
+            string[] rolesPermitidos = { "Cliente", "Counter", "Administrador", "SuperUsuario" };
+            if (User.IsInRole("SuperUsuario") && rolesPermitidos.Contains(model.Rol))
+            {
+                rol = model.Rol;
+            }
+
+            if (!model.AceptaCondiciones)
+            {
+                ModelState.AddModelError("AceptaCondiciones", "Debe aceptar el aviso de privacidad y las condiciones.");
+            }
+
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.UserName, Email = model.Email };
+                var user = new ApplicationUser
+                {
+                    UserName = model.UserName.Trim(),
+                    Email = model.Email.Trim(),
+                    Nombres = model.Nombres.Trim(),
+                    Apellidos = model.Apellidos.Trim()
+                };
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    
-                    // Para obtener más información sobre cómo habilitar la confirmación de cuentas y el restablecimiento de contraseña, visite https://go.microsoft.com/fwlink/?LinkID=320771
-                    // Enviar un correo electrónico con este vínculo
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirmar la cuenta", "Para confirmar su cuenta, haga clic <a href=\"" + callbackUrl + "\">aquí</a>");
+                    await UserManager.AddToRoleAsync(user.Id, rol);
 
+                    if (User.IsInRole("SuperUsuario"))
+                    {
+                        // El SuperUsuario crea la cuenta sin cerrar su propia sesión
+                        TempData["Mensaje"] = "Cuenta " + user.UserName + " creada correctamente con el rol " + rol + ".";
+                        return RedirectToAction("Register");
+                    }
+
+                    await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
                     return RedirectToAction("Index", "Home");
                 }
                 AddErrors(result);
             }
 
             // Si llegamos a este punto, es que se ha producido un error y volvemos a mostrar el formulario
+            CargarRoles(rol);
             return View(model);
+        }
+
+        // Lista de roles del formulario de registro: el visitante solo ve "Cliente"
+        private void CargarRoles(string seleccionado)
+        {
+            if (User.IsInRole("SuperUsuario"))
+            {
+                ViewBag.Rol = new SelectList(new[] { "Cliente", "Counter", "Administrador", "SuperUsuario" }, seleccionado);
+            }
+            else
+            {
+                ViewBag.Rol = new SelectList(new[] { "Cliente" }, "Cliente");
+            }
         }
 
         //

@@ -15,6 +15,7 @@ namespace AerolineaVIP.Controllers
         private AerolineaVIPContext db = new AerolineaVIPContext();
 
         // GET: Rutas
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
             var ruta = db.Ruta.Include(r => r.Aeropuerto).Include(r => r.Aeropuerto1);
@@ -22,6 +23,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Rutas/Details/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Details(int? id)
         {
             if (id == null)
@@ -37,6 +39,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Rutas/Create
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
             ViewBag.AeropuertoDestinoId = new SelectList(db.Aeropuerto, "AeropuertoId", "CodigoIATA");
@@ -49,6 +52,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "RutaId,AeropuertoOrigenId,AeropuertoDestinoId,TarifaReferencial,Activa")] Ruta ruta)
         {
             if (ModelState.IsValid)
@@ -64,6 +68,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Rutas/Edit/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -85,6 +90,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "RutaId,AeropuertoOrigenId,AeropuertoDestinoId,TarifaReferencial,Activa")] Ruta ruta)
         {
             if (ModelState.IsValid)
@@ -99,6 +105,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: Rutas/Delete/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -116,6 +123,7 @@ namespace AerolineaVIP.Controllers
         // POST: Rutas/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult DeleteConfirmed(int id)
         {
             Ruta ruta = db.Ruta.Find(id);

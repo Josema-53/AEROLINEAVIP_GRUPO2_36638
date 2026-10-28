@@ -45,6 +45,10 @@
                 <ul>
                     <li>@Html.ActionLink("Pasajeros", "Index", "Pasajeros")</li>
                     <li>@Html.ActionLink("Reservas", "Index", "Reservas")</li>
+                    @if (User.IsInRole("SuperUsuario"))
+                    {
+                        <li>@Html.ActionLink("Crear cuenta de usuario", "Register", "Account")</li>
+                    }
                 </ul>
             </div>
         </div>

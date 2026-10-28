@@ -15,12 +15,14 @@ namespace AerolineaVIP.Controllers
         private AerolineaVIPContext db = new AerolineaVIPContext();
 
         // GET: DatosEmisores
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
             return View(db.DatosEmisor.ToList());
         }
 
         // GET: DatosEmisores/Details/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Details(byte? id)
         {
             if (id == null)
@@ -36,6 +38,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: DatosEmisores/Create
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
             return View();
@@ -46,6 +49,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "DatosEmisorId,NombreComercial,Identificacion,Direccion,Telefono,Correo,LeyendaComprobante")] DatosEmisor datosEmisor)
         {
             if (ModelState.IsValid)
@@ -59,6 +63,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: DatosEmisores/Edit/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit(byte? id)
         {
             if (id == null)
@@ -78,6 +83,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "DatosEmisorId,NombreComercial,Identificacion,Direccion,Telefono,Correo,LeyendaComprobante")] DatosEmisor datosEmisor)
         {
             if (ModelState.IsValid)
@@ -90,6 +96,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: DatosEmisores/Delete/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Delete(byte? id)
         {
             if (id == null)
@@ -107,6 +114,7 @@ namespace AerolineaVIP.Controllers
         // POST: DatosEmisores/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult DeleteConfirmed(byte id)
         {
             DatosEmisor datosEmisor = db.DatosEmisor.Find(id);

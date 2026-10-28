@@ -1,48 +1,99 @@
 ﻿@model AerolineaVIP.Models.RegisterViewModel
 @{
-    ViewBag.Title = "Registrarse";
+    ViewBag.Title = "Crear cuenta";
 }
 
 <main aria-labelledby="title">
-    <h2 id="title">@ViewBag.Title.</h2>
+    <h2 id="title">@ViewBag.Title</h2>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success" role="alert">@TempData["Mensaje"]</div>
+    }
 
     @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { role = "form" }))
     {
         @Html.AntiForgeryToken()
-        <h4>Cree una cuenta nueva.</h4>
+        <p class="text-muted">Los campos marcados con * son obligatorios.</p>
         <hr />
-        @Html.ValidationSummary("", new { @class = "text-danger" })
+        @Html.ValidationSummary(true, "", new { @class = "text-danger", role = "alert" })
+
         <div class="row">
-            @Html.LabelFor(m => m.UserName, new { @class = "col-md-2 col-form-label" })
-            <div class="col-md-10">
-                @Html.TextBoxFor(m => m.UserName, new { @class = "form-control" })
+            <div class="col-md-6 mb-3">
+                @Html.LabelFor(m => m.Nombres, new { @class = "form-label" }) *
+                @Html.TextBoxFor(m => m.Nombres, new { @class = "form-control", placeholder = "Ej.: María José" })
+                @Html.ValidationMessageFor(m => m.Nombres, "", new { @class = "text-danger" })
+            </div>
+            <div class="col-md-6 mb-3">
+                @Html.LabelFor(m => m.Apellidos, new { @class = "form-label" }) *
+                @Html.TextBoxFor(m => m.Apellidos, new { @class = "form-control", placeholder = "Ej.: Pérez Torres" })
+                @Html.ValidationMessageFor(m => m.Apellidos, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                @Html.LabelFor(m => m.UserName, new { @class = "form-label" }) *
+                @Html.TextBoxFor(m => m.UserName, new { @class = "form-control", placeholder = "4–50 caracteres" })
                 @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger" })
             </div>
-        </div>
-
-        <div class="row">
-            @Html.LabelFor(m => m.Email, new { @class = "col-md-2 col-form-label" })
-            <div class="col-md-10">
-                @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+            <div class="col-md-6 mb-3">
+                @Html.LabelFor(m => m.Email, new { @class = "form-label" }) *
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email", placeholder = "correo@ejemplo.com" })
+                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
             </div>
         </div>
 
         <div class="row">
-            @Html.LabelFor(m => m.Password, new { @class = "col-md-2 col-form-label" })
-            <div class="col-md-10">
+            <div class="col-md-6 mb-3">
+                @Html.LabelFor(m => m.Password, new { @class = "form-label" }) *
                 @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+                <small class="text-muted">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</small>
+                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger d-block" })
             </div>
-        </div>
-        <div class="row">
-            @Html.LabelFor(m => m.ConfirmPassword, new { @class = "col-md-2 col-form-label" })
-            <div class="col-md-10">
+            <div class="col-md-6 mb-3">
+                @Html.LabelFor(m => m.ConfirmPassword, new { @class = "form-label" }) *
                 @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger" })
             </div>
         </div>
+
         <div class="row">
-            <div class="offset-md-2 col-md-10">
-                <input type="submit" value="Registrarse" class="btn btn-outline-dark" />
+            <div class="col-md-6 mb-3">
+                @Html.LabelFor(m => m.Rol, new { @class = "form-label" }) *
+                @if (User.IsInRole("SuperUsuario"))
+                {
+                    @Html.DropDownListFor(m => m.Rol, (SelectList)ViewBag.Rol, new { @class = "form-select" })
+                    <small class="text-muted">Como SuperUsuario puede crear cuentas con cualquier rol.</small>
+                }
+                else
+                {
+                    @Html.DropDownListFor(m => m.Rol, (SelectList)ViewBag.Rol, new { @class = "form-select", disabled = "disabled" })
+                    @Html.Hidden("Rol", "Cliente")
+                    <small class="text-muted">Las cuentas creadas desde el registro público tienen el rol Cliente.</small>
+                }
             </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="border rounded p-2 mb-2" style="max-height: 120px; overflow-y: auto;">
+                <small>
+                    <strong>Aviso de privacidad y condiciones.</strong>
+                    Esta es una aplicación académica. Los datos registrados se usan únicamente para gestionar
+                    reservas, pagos simulados y check-in dentro del proyecto. No se realizan cobros reales y los
+                    comprobantes generados no tienen validez tributaria.
+                </small>
+            </div>
+            <div class="form-check">
+                @Html.CheckBoxFor(m => m.AceptaCondiciones, new { @class = "form-check-input" })
+                @Html.LabelFor(m => m.AceptaCondiciones, new { @class = "form-check-label" }) *
+            </div>
+            @Html.ValidationMessageFor(m => m.AceptaCondiciones, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="mb-3">
+            <input type="submit" value="Crear cuenta" class="btn btn-dark" />
+            @Html.ActionLink("Cancelar", "Index", "Home", null, new { @class = "btn btn-outline-secondary" })
         </div>
     }
 </main>

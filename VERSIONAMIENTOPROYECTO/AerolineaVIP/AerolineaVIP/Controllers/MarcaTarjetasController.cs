@@ -15,12 +15,14 @@ namespace AerolineaVIP.Controllers
         private AerolineaVIPContext db = new AerolineaVIPContext();
 
         // GET: MarcaTarjetas
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Index()
         {
             return View(db.MarcaTarjeta.ToList());
         }
 
         // GET: MarcaTarjetas/Details/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Details(string id)
         {
             if (id == null)
@@ -36,6 +38,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: MarcaTarjetas/Create
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create()
         {
             return View();
@@ -46,6 +49,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Create([Bind(Include = "Codigo,Nombre,LongitudNumero,LongitudCodigoSeguridad,PrefijosReferencia,RutaLogo,Activa")] MarcaTarjeta marcaTarjeta)
         {
             if (ModelState.IsValid)
@@ -59,6 +63,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: MarcaTarjetas/Edit/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit(string id)
         {
             if (id == null)
@@ -78,6 +83,7 @@ namespace AerolineaVIP.Controllers
         // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Edit([Bind(Include = "Codigo,Nombre,LongitudNumero,LongitudCodigoSeguridad,PrefijosReferencia,RutaLogo,Activa")] MarcaTarjeta marcaTarjeta)
         {
             if (ModelState.IsValid)
@@ -90,6 +96,7 @@ namespace AerolineaVIP.Controllers
         }
 
         // GET: MarcaTarjetas/Delete/5
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Delete(string id)
         {
             if (id == null)
@@ -107,6 +114,7 @@ namespace AerolineaVIP.Controllers
         // POST: MarcaTarjetas/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult DeleteConfirmed(string id)
         {
             MarcaTarjeta marcaTarjeta = db.MarcaTarjeta.Find(id);
