@@ -579,6 +579,196 @@ namespace AerolineaVIP.Controllers
             return model;
         }
 
+        // ===================================================================================
+        // ÁREA DEL CLIENTE: mis reservas (13) y gestión / cancelación (14)
+        // ===================================================================================
+
+        // GET: Reservas/MisReservas?desde=...&hasta=...&estado=...&pagina=1
+        [Authorize]
+        public ActionResult MisReservas()
+        {
+            ReglasReserva.ProcesarExpiraciones(db);
+
+            // Siempre se filtra por el usuario autenticado, nunca por un parámetro de la URL
+            string usuarioId = User.Identity.GetUserId();
+            var reservas = db.Reserva.Include("Compra").Include("ReservaPasajeroVuelo.Vuelo.Frecuencia.Ruta.Aeropuerto")
+                .Include("ReservaPasajeroVuelo.Vuelo.Frecuencia.Ruta.Aeropuerto1")
+                .Where(r => r.UsuarioId == usuarioId)
+                .ToList();
+
+            var filas = reservas.Select(r =>
+            {
+                var vuelos = r.ReservaPasajeroVuelo.Select(a => a.Vuelo).Distinct().OrderBy(v => ReglasReserva.Salida(v)).ToList();
+                var compra = r.Compra.OrderByDescending(c => c.CompraId).FirstOrDefault();
+                return new FilaMisReservas
+                {
+                    ReservaId = r.ReservaId,
+                    Codigo = r.CodigoReserva,
+                    FechaViaje = vuelos.Count > 0 ? vuelos[0].FechaOperacion : (DateTime?)null,
+                    Ruta = vuelos.Count > 0
+                        ? vuelos[0].Frecuencia.Ruta.Aeropuerto1.Localidad + " → " + vuelos[vuelos.Count - 1].Frecuencia.Ruta.Aeropuerto.Localidad
+                        : "",
+                    Pasajeros = r.ReservaPasajeroVuelo.Select(a => a.PasajeroId).Distinct().Count(),
+                    EstadoReserva = r.EstadoReservaCodigo,
+                    EstadoCompra = compra == null ? "SIN COMPRA" : compra.EstadoCompraCodigo,
+                    Expira = r.EstadoReservaCodigo == "PENDIENTE" ? r.FechaExpiracion : null
+                };
+            }).AsQueryable();
+
+            // Filtros de búsqueda (fecha de viaje desde / hasta y estado)
+            DateTime desde;
+            if (DateTime.TryParse(Request.QueryString["desde"], out desde))
+            {
+                filas = filas.Where(f => f.FechaViaje >= desde);
+            }
+            DateTime hasta;
+            if (DateTime.TryParse(Request.QueryString["hasta"], out hasta))
+            {
+                filas = filas.Where(f => f.FechaViaje <= hasta);
+            }
+            if (!string.IsNullOrEmpty(Request.QueryString["estado"]))
+            {
+                string estado = Request.QueryString["estado"];
+                filas = filas.Where(f => f.EstadoReserva == estado);
+            }
+            if (!string.IsNullOrEmpty(Request.QueryString["desde"]) && !string.IsNullOrEmpty(Request.QueryString["hasta"]) && hasta < desde)
+            {
+                ViewBag.ErrorFiltro = "«Hasta» no puede ser anterior a «Desde».";
+            }
+
+            ViewBag.estado = new SelectList(db.EstadoReserva, "Codigo", "Codigo", Request.QueryString["estado"]);
+
+            // Paginación de 10 reservas por página
+            var lista = filas.OrderByDescending(f => f.FechaViaje).ToList();
+            int pagina = 1;
+            int.TryParse(Request.QueryString["pagina"], out pagina);
+            if (pagina < 1) { pagina = 1; }
+            ViewBag.Pagina = pagina;
+            ViewBag.TotalPaginas = Math.Max(1, (int)Math.Ceiling(lista.Count / 10.0));
+            ViewBag.HayReservas = reservas.Count > 0;
+
+            return View(lista.Skip((pagina - 1) * 10).Take(10).ToList());
+        }
+
+        // GET: Reservas/Gestionar/5
+        [Authorize]
+        public ActionResult Gestionar(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            ReglasReserva.ProcesarExpiraciones(db);
+            Reserva reserva = db.Reserva.Find(id);
+            if (reserva == null)
+            {
+                return HttpNotFound();
+            }
+            if (!ReglasReserva.PuedeOperar(reserva, User))
+            {
+                return View("AccesoDenegado");
+            }
+            return View(CrearModeloGestion(reserva));
+        }
+
+        // POST: Reservas/Cancelar/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public ActionResult Cancelar(int id)
+        {
+            ReglasReserva.ProcesarExpiraciones(db);
+            Reserva reserva = db.Reserva.Find(id);
+            if (reserva == null)
+            {
+                return HttpNotFound();
+            }
+            if (!ReglasReserva.PuedeOperar(reserva, User))
+            {
+                return View("AccesoDenegado");
+            }
+
+            // Se vuelve a comprobar con el estado actual por si cambió mientras se revisaba
+            string motivo = ReglasReserva.MotivoNoCancelable(reserva);
+            if (motivo != null)
+            {
+                TempData["Mensaje"] = motivo;
+                return RedirectToAction("Gestionar", new { id = reserva.ReservaId });
+            }
+
+            using (var transaccion = db.Database.BeginTransaction())
+            {
+                try
+                {
+                    // RG-08: reserva y asientos CANCELADA (vuelven a verde), compra ANULADA
+                    reserva.EstadoReservaCodigo = "CANCELADA";
+                    foreach (var asignacion in reserva.ReservaPasajeroVuelo.Where(a => a.EstadoAsignacionCodigo == "PENDIENTE" || a.EstadoAsignacionCodigo == "CONFIRMADA"))
+                    {
+                        asignacion.EstadoAsignacionCodigo = "CANCELADA";
+                    }
+
+                    foreach (var compra in reserva.Compra.Where(c => c.EstadoCompraCodigo == "PENDIENTE" || c.EstadoCompraCodigo == "PAGADA").ToList())
+                    {
+                        bool estabaPagada = compra.EstadoCompraCodigo == "PAGADA";
+                        compra.EstadoCompraCodigo = "ANULADA";
+
+                        if (estabaPagada)
+                        {
+                            // Reverso simulado del 100 % y nota de crédito académica (DP-05 y DP-08)
+                            foreach (var pago in compra.Pago.Where(p => p.EstadoPagoCodigo == "APROBADO"))
+                            {
+                                pago.EstadoPagoCodigo = "REVERSADO";
+                                pago.MensajeResultado = "Pago simulado reversado por cancelación.";
+                            }
+                            foreach (var confirmacion in compra.Comprobante.Where(c => c.TipoComprobanteCodigo == "CONFIRMACION"))
+                            {
+                                confirmacion.EstadoComprobanteCodigo = "ANULADO";
+                            }
+                            db.Comprobante.Add(new Comprobante
+                            {
+                                Compra = compra,
+                                TipoComprobanteCodigo = "NOTA_CREDITO",
+                                NumeroComprobante = ReglasReserva.SiguienteNumero(db, "NOTA_CREDITO", "NC-ACAD-"),
+                                FechaEmision = DateTime.Now,
+                                EstadoComprobanteCodigo = "EMITIDO"
+                            });
+                        }
+                    }
+
+                    db.SaveChanges();
+                    transaccion.Commit();
+                }
+                catch (Exception)
+                {
+                    transaccion.Rollback();
+                    TempData["Mensaje"] = "No se pudo cancelar la reserva. Intente nuevamente.";
+                    return RedirectToAction("Gestionar", new { id = reserva.ReservaId });
+                }
+            }
+
+            TempData["Mensaje"] = "Reserva " + reserva.CodigoReserva + " cancelada.";
+            return RedirectToAction("Gestionar", new { id = reserva.ReservaId });
+        }
+
+        private GestionarReservaViewModel CrearModeloGestion(Reserva reserva)
+        {
+            var compra = reserva.Compra.OrderByDescending(c => c.CompraId).FirstOrDefault();
+            var ultimoPago = compra == null ? null : compra.Pago.OrderByDescending(p => p.PagoId).FirstOrDefault();
+            return new GestionarReservaViewModel
+            {
+                ReservaId = reserva.ReservaId,
+                Codigo = reserva.CodigoReserva,
+                EstadoReserva = reserva.EstadoReservaCodigo,
+                EstadoCompra = compra == null ? "SIN COMPRA" : compra.EstadoCompraCodigo,
+                EstadoPago = ultimoPago == null ? "SIN PAGO" : ultimoPago.EstadoPagoCodigo,
+                Total = compra != null ? compra.Importe : reserva.ReservaPasajeroVuelo.Sum(a => a.ImporteTramo),
+                Expira = reserva.EstadoReservaCodigo == "PENDIENTE" ? reserva.FechaExpiracion : null,
+                Detalle = ReglasReserva.CrearDetalle(db, reserva),
+                MotivoNoCancelable = ReglasReserva.MotivoNoCancelable(reserva),
+                EsPagada = compra != null && compra.EstadoCompraCodigo == "PAGADA"
+            };
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)

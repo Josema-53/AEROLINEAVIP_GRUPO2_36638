@@ -102,6 +102,11 @@ namespace AerolineaVIP.Controllers
                         {
                             return RedirectToAction("Index", "Admin");
                         }
+                        if (await UserManager.IsInRoleAsync(usuario.Id, "Counter"))
+                        {
+                            return RedirectToAction("Buscar", "Vuelos");
+                        }
+                        return RedirectToAction("MisReservas", "Reservas");
                     }
                     return RedirectToLocal(returnUrl);
                 case SignInStatus.LockedOut:

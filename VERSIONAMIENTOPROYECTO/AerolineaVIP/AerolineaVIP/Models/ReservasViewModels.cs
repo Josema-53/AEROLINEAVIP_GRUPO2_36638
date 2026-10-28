@@ -144,4 +144,39 @@ namespace AerolineaVIP.Models
         [Display(Name = "Acepto las condiciones de la reserva")]
         public bool AceptaCondiciones { get; set; }
     }
+
+    // Pantalla 13: una fila de "Mis reservas"
+    public class FilaMisReservas
+    {
+        public int ReservaId { get; set; }
+        public string Codigo { get; set; }
+        public DateTime? FechaViaje { get; set; }
+        public string Ruta { get; set; }
+        public int Pasajeros { get; set; }
+        public string EstadoReserva { get; set; }
+        public string EstadoCompra { get; set; }
+        public DateTime? Expira { get; set; }
+    }
+
+    // Pantalla 14: gestión y cancelación de una reserva
+    public class GestionarReservaViewModel
+    {
+        public GestionarReservaViewModel()
+        {
+            Detalle = new List<DetalleConfirmacion>();
+        }
+
+        public int ReservaId { get; set; }
+        public string Codigo { get; set; }
+        public string EstadoReserva { get; set; }
+        public string EstadoCompra { get; set; }
+        public string EstadoPago { get; set; }
+        public decimal Total { get; set; }
+        public DateTime? Expira { get; set; }
+        public List<DetalleConfirmacion> Detalle { get; set; }
+        public string MotivoNoCancelable { get; set; }
+        public bool EsPagada { get; set; }
+        public bool PuedeCancelar { get { return MotivoNoCancelable == null; } }
+        public string AsientosTexto { get { return string.Join(", ", Detalle.Select(d => d.Asiento + " (tramo " + d.Tramo + ")")); } }
+    }
 }

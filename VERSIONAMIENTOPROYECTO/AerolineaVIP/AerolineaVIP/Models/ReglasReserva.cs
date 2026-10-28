@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Security.Principal;
+using Microsoft.AspNet.Identity;
 
 namespace AerolineaVIP.Models
 {
@@ -11,6 +13,7 @@ namespace AerolineaVIP.Models
     {
         public const int MinutosConexion = 60;   // DP-10: conexión mínima en Guayaquil
         public const int MinutosRetencion = 30;  // DP-07: retención de una reserva pendiente
+        public const int HorasCancelacionPagada = 24;  // DP-08: cancelación de reservas pagadas
 
         public static string CodigoVuelo(int vueloId)
         {
@@ -231,6 +234,101 @@ namespace AerolineaVIP.Models
                     || (Salida(siguiente) - Llegada(anterior)).TotalMinutes < MinutosConexion)
                 {
                     return "Los tramos seleccionados no forman un itinerario válido.";
+                }
+            }
+            return null;
+        }
+
+        // Solo el titular de la reserva o personal autorizado (Counter, Administrador, SuperUsuario)
+        public static bool PuedeOperar(Reserva reserva, IPrincipal usuario)
+        {
+            return reserva.UsuarioId == usuario.Identity.GetUserId()
+                || usuario.IsInRole("Counter") || usuario.IsInRole("Administrador") || usuario.IsInRole("SuperUsuario");
+        }
+
+        // Siguiente número de comprobante académico de un tipo (ACAD-000001, CNF-000001, NC-ACAD-000001)
+        public static string SiguienteNumero(AerolineaVIPContext db, string tipo, string prefijo)
+        {
+            var numeros = db.Comprobante.Where(c => c.TipoComprobanteCodigo == tipo).Select(c => c.NumeroComprobante).ToList();
+            int maximo = 0;
+            foreach (var numero in numeros)
+            {
+                int valor;
+                if (numero.StartsWith(prefijo) && int.TryParse(numero.Substring(prefijo.Length), out valor) && valor > maximo)
+                {
+                    maximo = valor;
+                }
+            }
+            return prefijo + (maximo + 1).ToString("D6");
+        }
+
+        // Detalle de una reserva: un renglón por tramo, pasajero y asiento
+        public static List<DetalleConfirmacion> CrearDetalle(AerolineaVIPContext db, Reserva reserva)
+        {
+            var asignaciones = reserva.ReservaPasajeroVuelo
+                .Where(a => a.EstadoAsignacionCodigo == "PENDIENTE" || a.EstadoAsignacionCodigo == "CONFIRMADA"
+                            || reserva.EstadoReservaCodigo != "PENDIENTE")
+                .ToList();
+            var vueloIds = asignaciones.Select(a => a.VueloId).Distinct().ToList();
+            var vuelos = VuelosConDetalle(db).Where(v => vueloIds.Contains(v.VueloId)).ToList()
+                .OrderBy(v => Salida(v)).ToList();
+            var asientos = db.Asiento.ToList();
+
+            var detalle = new List<DetalleConfirmacion>();
+            for (int t = 0; t < vuelos.Count; t++)
+            {
+                var vuelo = vuelos[t];
+                foreach (var a in asignaciones.Where(x => x.VueloId == vuelo.VueloId).OrderBy(x => x.NumeroAsiento))
+                {
+                    var asiento = vuelo.Aeronave == null ? null
+                        : asientos.FirstOrDefault(s => s.ModeloAeronaveId == vuelo.Aeronave.ModeloAeronaveId && s.NumeroAsiento == a.NumeroAsiento);
+                    detalle.Add(new DetalleConfirmacion
+                    {
+                        Tramo = t + 1,
+                        Vuelo = CodigoVuelo(vuelo.VueloId),
+                        Ruta = vuelo.Frecuencia.Ruta.Aeropuerto1.Localidad + " → " + vuelo.Frecuencia.Ruta.Aeropuerto.Localidad,
+                        Fecha = vuelo.FechaOperacion,
+                        Horario = vuelo.Frecuencia.HoraSalida.ToString("hh\\:mm") + "–" + vuelo.Frecuencia.HoraLlegada.ToString("hh\\:mm"),
+                        Pasajero = a.Pasajero.Nombres + " " + a.Pasajero.Apellidos,
+                        Asiento = asiento != null ? asiento.Codigo : a.NumeroAsiento.ToString()
+                    });
+                }
+            }
+            return detalle;
+        }
+
+        // Salida del primer tramo de una reserva
+        public static DateTime? PrimeraSalida(Reserva reserva)
+        {
+            var vuelos = reserva.ReservaPasajeroVuelo.Select(a => a.Vuelo).Distinct().ToList();
+            if (vuelos.Count == 0)
+            {
+                return null;
+            }
+            return vuelos.Min(v => Salida(v));
+        }
+
+        // DP-08: motivo por el que una reserva no puede cancelarse; null si puede cancelarse
+        public static string MotivoNoCancelable(Reserva reserva)
+        {
+            if (reserva.EstadoReservaCodigo == "CANCELADA" || reserva.EstadoReservaCodigo == "EXPIRADA")
+            {
+                return "La reserva ya está " + reserva.EstadoReservaCodigo.ToLower() + ".";
+            }
+            var salida = PrimeraSalida(reserva);
+            if (salida == null || salida <= DateTime.Now)
+            {
+                return "El vuelo ya salió; la reserva no puede cancelarse.";
+            }
+            if (reserva.EstadoReservaCodigo == "CONFIRMADA")
+            {
+                if (salida.Value.AddHours(-HorasCancelacionPagada) < DateTime.Now)
+                {
+                    return "Las reservas pagadas solo pueden cancelarse hasta " + HorasCancelacionPagada + " horas antes de la salida.";
+                }
+                if (reserva.ReservaPasajeroVuelo.Any(a => a.CheckIn.Any(c => c.EstadoCheckInCodigo == "COMPLETADO")))
+                {
+                    return "La reserva tiene pasajeros con check-in completado; no puede cancelarse.";
                 }
             }
             return null;

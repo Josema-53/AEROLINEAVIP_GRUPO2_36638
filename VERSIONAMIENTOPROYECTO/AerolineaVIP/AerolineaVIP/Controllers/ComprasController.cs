@@ -30,7 +30,7 @@ namespace AerolineaVIP.Controllers
             {
                 return HttpNotFound();
             }
-            if (!PuedeOperar(reserva))
+            if (!ReglasReserva.PuedeOperar(reserva, User))
             {
                 return View("AccesoDenegado");
             }
@@ -58,7 +58,7 @@ namespace AerolineaVIP.Controllers
             {
                 return HttpNotFound();
             }
-            if (!PuedeOperar(reserva))
+            if (!ReglasReserva.PuedeOperar(reserva, User))
             {
                 return View("AccesoDenegado");
             }
@@ -168,7 +168,7 @@ namespace AerolineaVIP.Controllers
                         {
                             Compra = compra,
                             TipoComprobanteCodigo = "CONFIRMACION",
-                            NumeroComprobante = SiguienteNumero("CONFIRMACION", "CNF-"),
+                            NumeroComprobante = ReglasReserva.SiguienteNumero(db, "CONFIRMACION", "CNF-"),
                             FechaEmision = ahora,
                             EstadoComprobanteCodigo = "EMITIDO"
                         });
@@ -176,7 +176,7 @@ namespace AerolineaVIP.Controllers
                         {
                             Compra = compra,
                             TipoComprobanteCodigo = "FACTURA",
-                            NumeroComprobante = SiguienteNumero("FACTURA", "ACAD-"),
+                            NumeroComprobante = ReglasReserva.SiguienteNumero(db, "FACTURA", "ACAD-"),
                             FechaEmision = ahora,
                             EstadoComprobanteCodigo = "EMITIDO"
                         });
@@ -211,7 +211,7 @@ namespace AerolineaVIP.Controllers
             {
                 return HttpNotFound();
             }
-            if (!PuedeOperar(reserva))
+            if (!ReglasReserva.PuedeOperar(reserva, User))
             {
                 return View("AccesoDenegado");
             }
@@ -256,18 +256,11 @@ namespace AerolineaVIP.Controllers
                 model.Mensaje = "La reserva " + reserva.CodigoReserva + " está en estado " + reserva.EstadoReservaCodigo + ".";
             }
 
-            model.Detalle = CrearDetalle(reserva);
+            model.Detalle = ReglasReserva.CrearDetalle(db, reserva);
             return View(model);
         }
 
         // ----- Métodos auxiliares -----
-
-        // Solo el titular de la reserva o personal autorizado (Counter, Administrador, SuperUsuario)
-        private bool PuedeOperar(Reserva reserva)
-        {
-            return reserva.UsuarioId == User.Identity.GetUserId()
-                || User.IsInRole("Counter") || User.IsInRole("Administrador") || User.IsInRole("SuperUsuario");
-        }
 
         private decimal CalcularTotal(Reserva reserva)
         {
@@ -276,58 +269,9 @@ namespace AerolineaVIP.Controllers
                 .Sum(a => a.ImporteTramo);
         }
 
-        private string SiguienteNumero(string tipo, string prefijo)
-        {
-            var numeros = db.Comprobante.Where(c => c.TipoComprobanteCodigo == tipo).Select(c => c.NumeroComprobante).ToList();
-            int maximo = 0;
-            foreach (var numero in numeros)
-            {
-                int valor;
-                if (numero.StartsWith(prefijo) && int.TryParse(numero.Substring(prefijo.Length), out valor) && valor > maximo)
-                {
-                    maximo = valor;
-                }
-            }
-            return prefijo + (maximo + 1).ToString("D6");
-        }
-
-        private List<DetalleConfirmacion> CrearDetalle(Reserva reserva)
-        {
-            var asignaciones = reserva.ReservaPasajeroVuelo
-                .Where(a => a.EstadoAsignacionCodigo == "PENDIENTE" || a.EstadoAsignacionCodigo == "CONFIRMADA"
-                            || reserva.EstadoReservaCodigo != "PENDIENTE")
-                .ToList();
-            var vueloIds = asignaciones.Select(a => a.VueloId).Distinct().ToList();
-            var vuelos = ReglasReserva.VuelosConDetalle(db).Where(v => vueloIds.Contains(v.VueloId)).ToList()
-                .OrderBy(v => ReglasReserva.Salida(v)).ToList();
-            var asientos = db.Asiento.ToList();
-
-            var detalle = new List<DetalleConfirmacion>();
-            for (int t = 0; t < vuelos.Count; t++)
-            {
-                var vuelo = vuelos[t];
-                foreach (var a in asignaciones.Where(x => x.VueloId == vuelo.VueloId).OrderBy(x => x.NumeroAsiento))
-                {
-                    var asiento = vuelo.Aeronave == null ? null
-                        : asientos.FirstOrDefault(s => s.ModeloAeronaveId == vuelo.Aeronave.ModeloAeronaveId && s.NumeroAsiento == a.NumeroAsiento);
-                    detalle.Add(new DetalleConfirmacion
-                    {
-                        Tramo = t + 1,
-                        Vuelo = ReglasReserva.CodigoVuelo(vuelo.VueloId),
-                        Ruta = vuelo.Frecuencia.Ruta.Aeropuerto1.Localidad + " → " + vuelo.Frecuencia.Ruta.Aeropuerto.Localidad,
-                        Fecha = vuelo.FechaOperacion,
-                        Horario = vuelo.Frecuencia.HoraSalida.ToString("hh\\:mm") + "–" + vuelo.Frecuencia.HoraLlegada.ToString("hh\\:mm"),
-                        Pasajero = a.Pasajero.Nombres + " " + a.Pasajero.Apellidos,
-                        Asiento = asiento != null ? asiento.Codigo : a.NumeroAsiento.ToString()
-                    });
-                }
-            }
-            return detalle;
-        }
-
         private void CargarResumen(PagoViewModel model, Reserva reserva)
         {
-            var detalle = CrearDetalle(reserva);
+            var detalle = ReglasReserva.CrearDetalle(db, reserva);
             var compra = reserva.Compra.FirstOrDefault(c => c.EstadoCompraCodigo == "PENDIENTE");
 
             model.ReservaId = reserva.ReservaId;
