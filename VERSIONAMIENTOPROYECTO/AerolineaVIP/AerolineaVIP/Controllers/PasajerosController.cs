@@ -60,25 +60,24 @@ namespace AerolineaVIP.Controllers
         }
 
         // POST: Pasajeros/Create
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que quiere enlazarse. Para obtener 
-        // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SuperUsuario,Administrador")]
-        public ActionResult Create([Bind(Include = "PasajeroId,TipoDocumentoCodigo,NumeroDocumento,Nombres,Apellidos,FechaNacimiento,Correo,Telefono,FechaRegistro")] Pasajero pasajero)
+        public ActionResult Create([Bind(Include = "TipoDocumentoCodigo,NumeroDocumento,Nombres,Apellidos,FechaNacimiento,Correo,Telefono")] Pasajero pasajero)
         {
+            ValidarPasajero(pasajero);
             if (ModelState.IsValid)
             {
+                pasajero.FechaRegistro = DateTime.Now;
                 db.Pasajero.Add(pasajero);
                 try
                 {
                     db.SaveChanges();
                     return RedirectToAction("Index");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
-                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                    ModelState.AddModelError("", "No se pudo guardar. Verifique los datos e inténtelo nuevamente.");
                 }
             }
 
@@ -104,25 +103,34 @@ namespace AerolineaVIP.Controllers
         }
 
         // POST: Pasajeros/Edit/5
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que quiere enlazarse. Para obtener 
-        // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SuperUsuario,Administrador")]
-        public ActionResult Edit([Bind(Include = "PasajeroId,TipoDocumentoCodigo,NumeroDocumento,Nombres,Apellidos,FechaNacimiento,Correo,Telefono,FechaRegistro")] Pasajero pasajero)
+        public ActionResult Edit([Bind(Include = "PasajeroId,TipoDocumentoCodigo,NumeroDocumento,Nombres,Apellidos,FechaNacimiento,Correo,Telefono")] Pasajero pasajero)
         {
+            ValidarPasajero(pasajero);
+            var actual = db.Pasajero.Find(pasajero.PasajeroId);
+            if (actual == null)
+            {
+                return HttpNotFound();
+            }
             if (ModelState.IsValid)
             {
-                db.Entry(pasajero).State = EntityState.Modified;
+                actual.TipoDocumentoCodigo = pasajero.TipoDocumentoCodigo;
+                actual.NumeroDocumento = pasajero.NumeroDocumento;
+                actual.Nombres = pasajero.Nombres;
+                actual.Apellidos = pasajero.Apellidos;
+                actual.FechaNacimiento = pasajero.FechaNacimiento;
+                actual.Correo = pasajero.Correo;
+                actual.Telefono = pasajero.Telefono;
                 try
                 {
                     db.SaveChanges();
                     return RedirectToAction("Index");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
-                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                    ModelState.AddModelError("", "No se pudo guardar. Verifique los datos e inténtelo nuevamente.");
                 }
             }
             ViewBag.TipoDocumentoCodigo = new SelectList(db.TipoDocumentoIdentidad, "Codigo", "Descripcion", pasajero.TipoDocumentoCodigo);
@@ -152,6 +160,10 @@ namespace AerolineaVIP.Controllers
         public ActionResult DeleteConfirmed(int id)
         {
             Pasajero pasajero = db.Pasajero.Find(id);
+            if (pasajero == null)
+            {
+                return HttpNotFound();
+            }
             db.Pasajero.Remove(pasajero);
             try
             {
@@ -163,6 +175,41 @@ namespace AerolineaVIP.Controllers
                 return RedirectToAction("Delete", new { id = id });
             }
             return RedirectToAction("Index");
+        }
+
+        private void ValidarPasajero(Pasajero pasajero)
+        {
+            pasajero.NumeroDocumento = (pasajero.NumeroDocumento ?? "").Trim().ToUpperInvariant();
+            pasajero.Nombres = (pasajero.Nombres ?? "").Trim();
+            pasajero.Apellidos = (pasajero.Apellidos ?? "").Trim();
+            pasajero.Correo = string.IsNullOrWhiteSpace(pasajero.Correo) ? null : pasajero.Correo.Trim();
+            pasajero.Telefono = string.IsNullOrWhiteSpace(pasajero.Telefono) ? null : pasajero.Telefono.Trim();
+
+            if (!db.TipoDocumentoIdentidad.Any(t => t.Codigo == pasajero.TipoDocumentoCodigo))
+            {
+                ModelState.AddModelError("TipoDocumentoCodigo", "Seleccione un tipo de documento válido.");
+            }
+            if (string.IsNullOrWhiteSpace(pasajero.NumeroDocumento) || pasajero.NumeroDocumento.Length > 20)
+            {
+                ModelState.AddModelError("NumeroDocumento", "Ingrese un documento válido de hasta 20 caracteres.");
+            }
+            else if (pasajero.TipoDocumentoCodigo == "CEDULA" && !ReglasReserva.ValidarCedula(pasajero.NumeroDocumento))
+            {
+                ModelState.AddModelError("NumeroDocumento", "La cédula ingresada no es válida.");
+            }
+            if (string.IsNullOrWhiteSpace(pasajero.Nombres) || string.IsNullOrWhiteSpace(pasajero.Apellidos))
+            {
+                ModelState.AddModelError("", "Ingrese los nombres y apellidos del pasajero.");
+            }
+            if (pasajero.FechaNacimiento.HasValue && (pasajero.FechaNacimiento.Value.Date > DateTime.Today || pasajero.FechaNacimiento.Value.Year <= 1900))
+            {
+                ModelState.AddModelError("FechaNacimiento", "La fecha de nacimiento no es válida.");
+            }
+            if (db.Pasajero.Any(p => p.TipoDocumentoCodigo == pasajero.TipoDocumentoCodigo
+                && p.NumeroDocumento == pasajero.NumeroDocumento && p.PasajeroId != pasajero.PasajeroId))
+            {
+                ModelState.AddModelError("NumeroDocumento", "Ya existe un pasajero con ese documento.");
+            }
         }
 
         protected override void Dispose(bool disposing)

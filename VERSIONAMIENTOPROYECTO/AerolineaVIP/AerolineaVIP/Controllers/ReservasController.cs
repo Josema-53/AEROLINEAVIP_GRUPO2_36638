@@ -35,7 +35,7 @@ namespace AerolineaVIP.Controllers
             }
             ViewBag.estado = new SelectList(db.EstadoReserva, "Codigo", "Descripcion", Request.QueryString["estado"]);
 
-            // Nombre de usuario del titular (base de Identity)
+            // Nombre de usuario del titular de la reserva
             using (var identidad = new ApplicationDbContext())
             {
                 ViewBag.Usuarios = identidad.Users.ToList().ToDictionary(u => u.Id, u => u.UserName);
@@ -68,8 +68,6 @@ namespace AerolineaVIP.Controllers
         }
 
         // POST: Reservas/Create
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que quiere enlazarse. Para obtener 
-        // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SuperUsuario,Administrador")]
@@ -83,10 +81,9 @@ namespace AerolineaVIP.Controllers
                     db.SaveChanges();
                     return RedirectToAction("Index");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
-                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                    ModelState.AddModelError("", "No se pudo guardar. Verifique los datos e inténtelo nuevamente.");
                 }
             }
 
@@ -112,8 +109,6 @@ namespace AerolineaVIP.Controllers
         }
 
         // POST: Reservas/Edit/5
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que quiere enlazarse. Para obtener 
-        // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SuperUsuario,Administrador")]
@@ -127,10 +122,9 @@ namespace AerolineaVIP.Controllers
                     db.SaveChanges();
                     return RedirectToAction("Index");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
-                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                    ModelState.AddModelError("", "No se pudo guardar. Verifique los datos e inténtelo nuevamente.");
                 }
             }
             ViewBag.EstadoReservaCodigo = new SelectList(db.EstadoReserva, "Codigo", "Descripcion", reserva.EstadoReservaCodigo);
@@ -160,6 +154,10 @@ namespace AerolineaVIP.Controllers
         public ActionResult DeleteConfirmed(int id)
         {
             Reserva reserva = db.Reserva.Find(id);
+            if (reserva == null)
+            {
+                return HttpNotFound();
+            }
             db.Reserva.Remove(reserva);
             try
             {
@@ -173,12 +171,7 @@ namespace AerolineaVIP.Controllers
             return RedirectToAction("Index");
         }
 
-        // ===================================================================================
-        // FLUJO DE RESERVA: selección de asientos (8), pasajeros (9) y confirmación (10)
-        // La operación en curso se guarda en Session["Operacion"] hasta confirmar la reserva.
-        // ===================================================================================
-
-        // GET: Reservas/SeleccionAsiento?vuelos=31,32&pasajeros=2
+        // La selección de vuelos y asientos se conserva en la sesión.
         [Authorize]
         public ActionResult SeleccionAsiento(string vuelos, int? pasajeros)
         {
@@ -187,14 +180,16 @@ namespace AerolineaVIP.Controllers
 
             ReglasReserva.ProcesarExpiraciones(db);
             var listaVuelos = CargarVuelos(ids);
-            string error = ValidarVuelos(listaVuelos, cantidad);
+            string error = listaVuelos.Count != ids.Count
+                ? "Uno de los vuelos seleccionados no existe."
+                : ValidarVuelos(listaVuelos, cantidad);
             if (error != null)
             {
                 TempData["Mensaje"] = error;
                 return RedirectToAction("Buscar", "Vuelos");
             }
 
-            // Si se regresa desde la pantalla 9 con la misma operación, se conservan los asientos elegidos
+            // Conserva los asientos elegidos cuando se regresa desde el formulario.
             var operacion = Session["Operacion"] as OperacionReserva;
             if (operacion == null || operacion.VuelosTexto != string.Join(",", ids) || operacion.CantidadPasajeros != cantidad)
             {
@@ -205,7 +200,6 @@ namespace AerolineaVIP.Controllers
             return View(CrearModeloSeleccion(listaVuelos, operacion, null));
         }
 
-        // POST: Reservas/SeleccionAsiento
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
@@ -220,8 +214,16 @@ namespace AerolineaVIP.Controllers
 
             ReglasReserva.ProcesarExpiraciones(db);
             var listaVuelos = CargarVuelos(operacion.VueloIds);
+            var errorVuelos = listaVuelos.Count != operacion.VueloIds.Count
+                ? "Uno de los vuelos seleccionados no existe."
+                : ValidarVuelos(listaVuelos, operacion.CantidadPasajeros);
+            if (errorVuelos != null)
+            {
+                TempData["Mensaje"] = errorVuelos;
+                return RedirectToAction("Buscar", "Vuelos");
+            }
 
-            // Formato recibido: "pasajero-vuelo-numeroAsiento" separados por comas (lo arma jQuery)
+            // Formato recibido: pasajero-vuelo-numeroAsiento
             var elegidos = new List<SeleccionAsientoItem>();
             foreach (var parte in (selecciones ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
@@ -234,7 +236,7 @@ namespace AerolineaVIP.Controllers
                 }
             }
 
-            // Validaciones del servidor (RNP-04): un asiento válido y libre por pasajero y tramo
+            // Cada pasajero debe tener un asiento libre por tramo.
             var validos = new List<SeleccionAsientoItem>();
             var errores = new List<string>();
             foreach (var vuelo in listaVuelos)
@@ -274,13 +276,11 @@ namespace AerolineaVIP.Controllers
 
             if (errores.Count > 0)
             {
-                // Se redibuja el mapa con el estado real y se conservan las selecciones válidas
                 return View(CrearModeloSeleccion(listaVuelos, operacion, string.Join(" ", errores.Distinct())));
             }
             return RedirectToAction("Pasajeros");
         }
 
-        // GET: Reservas/Pasajeros
         [Authorize]
         public ActionResult Pasajeros()
         {
@@ -307,7 +307,6 @@ namespace AerolineaVIP.Controllers
             return View(model);
         }
 
-        // POST: Reservas/Pasajeros
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
@@ -335,6 +334,10 @@ namespace AerolineaVIP.Controllers
                     p.NumeroDocumento = p.NumeroDocumento.Trim().ToUpper();
                 }
 
+                if (!db.TipoDocumentoIdentidad.Any(t => t.Codigo == p.TipoDocumentoCodigo))
+                {
+                    ModelState.AddModelError("Pasajeros[" + i + "].TipoDocumentoCodigo", "Seleccione un tipo de documento válido.");
+                }
                 if (p.TipoDocumentoCodigo == "CEDULA" && !ReglasReserva.ValidarCedula(p.NumeroDocumento))
                 {
                     ModelState.AddModelError(campo, "La cédula debe tener 10 dígitos y ser válida.");
@@ -348,7 +351,7 @@ namespace AerolineaVIP.Controllers
                     ModelState.AddModelError(campo, "Este documento ya está registrado en otro pasajero de la reserva.");
                 }
 
-                // Un pasajero no puede tener dos asientos vigentes en el mismo vuelo (UX_RPV_PasajeroActivo)
+                // Un pasajero no puede mantener dos asientos en un mismo vuelo.
                 var existente = db.Pasajero.FirstOrDefault(x => x.TipoDocumentoCodigo == p.TipoDocumentoCodigo && x.NumeroDocumento == p.NumeroDocumento);
                 if (existente != null)
                 {
@@ -375,7 +378,6 @@ namespace AerolineaVIP.Controllers
             return RedirectToAction("Confirmar");
         }
 
-        // GET: Reservas/Confirmar
         [Authorize]
         public ActionResult Confirmar()
         {
@@ -388,7 +390,6 @@ namespace AerolineaVIP.Controllers
             return View(CrearModeloConfirmacion(operacion));
         }
 
-        // POST: Reservas/Confirmar
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
@@ -408,7 +409,7 @@ namespace AerolineaVIP.Controllers
                 return View(modeloError);
             }
 
-            // DP-13: el cliente reserva para sí mismo; el personal debe indicar un cliente existente
+            // El cliente reserva para su cuenta; el personal identifica al titular.
             string usuarioReserva = User.Identity.GetUserId();
             if (User.IsInRole("Counter") || User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
             {
@@ -427,8 +428,10 @@ namespace AerolineaVIP.Controllers
             ReglasReserva.ProcesarExpiraciones(db);
             var listaVuelos = CargarVuelos(operacion.VueloIds);
 
-            // Revalidación de la disponibilidad al confirmar (RNP-04)
-            string error = ValidarVuelos(listaVuelos, operacion.CantidadPasajeros);
+            // Verifica nuevamente la disponibilidad antes de guardar.
+            string error = listaVuelos.Count != operacion.VueloIds.Count
+                ? "Uno de los vuelos seleccionados no existe."
+                : ValidarVuelos(listaVuelos, operacion.CantidadPasajeros);
             var ocupadosAhora = new List<string>();
             foreach (var vuelo in listaVuelos)
             {
@@ -451,7 +454,7 @@ namespace AerolineaVIP.Controllers
                 return RedirectToAction("SeleccionAsiento", new { vuelos = operacion.VuelosTexto, pasajeros = operacion.CantidadPasajeros });
             }
 
-            // DP-07: la reserva se retiene 30 minutos, sin pasar de la salida del primer tramo
+            // La reserva pendiente puede mantenerse hasta 30 minutos.
             var ahora = DateTime.Now;
             var expiracion = ahora.AddMinutes(ReglasReserva.MinutosRetencion);
             var primeraSalida = ReglasReserva.Salida(listaVuelos[0]);
@@ -508,7 +511,7 @@ namespace AerolineaVIP.Controllers
                                 Pasajero = pasajero,
                                 VueloId = vuelo.VueloId,
                                 NumeroAsiento = eleccion.NumeroAsiento,
-                                ImporteTramo = vuelo.Frecuencia.Ruta.TarifaReferencial,   // DP-04: tarifa copiada al reservar
+                                ImporteTramo = vuelo.Frecuencia.Ruta.TarifaReferencial,
                                 EstadoAsignacionCodigo = "PENDIENTE",
                                 FechaAsignacion = ahora
                             });
@@ -520,7 +523,7 @@ namespace AerolineaVIP.Controllers
                 }
                 catch (Exception)
                 {
-                    // Si un asiento falla (índice único o trigger de la base), no se guarda nada
+                    // La transacción impide guardar reservas incompletas.
                     transaccion.Rollback();
                     TempData["Mensaje"] = "No se pudo registrar la reserva porque uno de los asientos ya no está disponible. Seleccione otro.";
                     return RedirectToAction("SeleccionAsiento", new { vuelos = operacion.VuelosTexto, pasajeros = operacion.CantidadPasajeros });
@@ -536,8 +539,6 @@ namespace AerolineaVIP.Controllers
             }
             return RedirectToAction("Confirmacion", "Compras", new { id = reserva.ReservaId });
         }
-
-        // ----- Métodos auxiliares del flujo de reserva -----
 
         private List<int> LeerVuelos(string vuelos)
         {
@@ -566,6 +567,10 @@ namespace AerolineaVIP.Controllers
             if (error != null)
             {
                 return error;
+            }
+            if (!ReglasReserva.ItinerarioRegistrado(db, vuelos.Select(v => v.VueloId).ToList()))
+            {
+                return "El itinerario seleccionado no está disponible.";
             }
             var ocupados = ReglasReserva.OcupadosPorVuelo(db, vuelos.Select(v => v.VueloId).ToList());
             foreach (var vuelo in vuelos)
@@ -641,17 +646,12 @@ namespace AerolineaVIP.Controllers
             return model;
         }
 
-        // ===================================================================================
-        // ÁREA DEL CLIENTE: mis reservas (13) y gestión / cancelación (14)
-        // ===================================================================================
-
-        // GET: Reservas/MisReservas?desde=...&hasta=...&estado=...&pagina=1
         [Authorize]
         public ActionResult MisReservas()
         {
             ReglasReserva.ProcesarExpiraciones(db);
 
-            // Siempre se filtra por el usuario autenticado, nunca por un parámetro de la URL
+            // Las reservas se filtran por el usuario autenticado.
             string usuarioId = User.Identity.GetUserId();
             var reservas = db.Reserva.Include("Compra").Include("ReservaPasajeroVuelo.Vuelo.Frecuencia.Ruta.Aeropuerto")
                 .Include("ReservaPasajeroVuelo.Vuelo.Frecuencia.Ruta.Aeropuerto1")
@@ -677,7 +677,7 @@ namespace AerolineaVIP.Controllers
                 };
             }).AsQueryable();
 
-            // Filtros de búsqueda (fecha de viaje desde / hasta y estado)
+            // Filtros por fecha y estado
             DateTime desde;
             if (DateTime.TryParse(Request.QueryString["desde"], out desde))
             {
@@ -712,7 +712,6 @@ namespace AerolineaVIP.Controllers
             return View(lista.Skip((pagina - 1) * 10).Take(10).ToList());
         }
 
-        // GET: Reservas/Gestionar/5
         [Authorize]
         public ActionResult Gestionar(int? id)
         {
@@ -733,7 +732,6 @@ namespace AerolineaVIP.Controllers
             return View(CrearModeloGestion(reserva));
         }
 
-        // POST: Reservas/Cancelar/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
@@ -750,7 +748,6 @@ namespace AerolineaVIP.Controllers
                 return View("AccesoDenegado");
             }
 
-            // Se vuelve a comprobar con el estado actual por si cambió mientras se revisaba
             string motivo = ReglasReserva.MotivoNoCancelable(reserva);
             if (motivo != null)
             {
@@ -762,7 +759,6 @@ namespace AerolineaVIP.Controllers
             {
                 try
                 {
-                    // RG-08: reserva y asientos CANCELADA (vuelven a verde), compra ANULADA
                     reserva.EstadoReservaCodigo = "CANCELADA";
                     foreach (var asignacion in reserva.ReservaPasajeroVuelo.Where(a => a.EstadoAsignacionCodigo == "PENDIENTE" || a.EstadoAsignacionCodigo == "CONFIRMADA"))
                     {
@@ -776,7 +772,7 @@ namespace AerolineaVIP.Controllers
 
                         if (estabaPagada)
                         {
-                            // Reverso simulado del 100 % y nota de crédito académica (DP-05 y DP-08)
+                            // Registra el reverso del pago simulado y la nota de crédito.
                             foreach (var pago in compra.Pago.Where(p => p.EstadoPagoCodigo == "APROBADO"))
                             {
                                 pago.EstadoPagoCodigo = "REVERSADO";
@@ -831,7 +827,6 @@ namespace AerolineaVIP.Controllers
             };
         }
 
-        // DP-13: devuelve el Id del cliente (rol Cliente) por nombre de usuario o correo
         private string BuscarCliente(string dato)
         {
             if (string.IsNullOrWhiteSpace(dato))
