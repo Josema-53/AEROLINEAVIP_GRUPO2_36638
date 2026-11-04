@@ -23,7 +23,7 @@ namespace AerolineaVIP.Controllers
                 .Include("Frecuencia.Ruta.Aeropuerto").Include("Frecuencia.Ruta.Aeropuerto1")
                 .Include("TramoItinerario.Itinerario").AsQueryable();
 
-            // Filtros de búsqueda (fecha desde / hasta, ruta y estado)
+            // Filtros de búsqueda
             DateTime desde;
             if (DateTime.TryParse(Request.QueryString["desde"], out desde))
             {
@@ -34,9 +34,9 @@ namespace AerolineaVIP.Controllers
             {
                 query = query.Where(v => v.FechaOperacion <= hasta);
             }
-            if (!string.IsNullOrEmpty(Request.QueryString["ruta"]))
+            int ruta;
+            if (int.TryParse(Request.QueryString["ruta"], out ruta))
             {
-                int ruta = Convert.ToInt32(Request.QueryString["ruta"]);
                 query = query.Where(v => v.Frecuencia.RutaId == ruta);
             }
             if (!string.IsNullOrEmpty(Request.QueryString["estado"]))
@@ -70,10 +70,10 @@ namespace AerolineaVIP.Controllers
                 return HttpNotFound();
             }
 
-            // Mapa de asientos (misma vista que la pantalla 7, en modo consulta)
+            // Mapa de asientos para consulta administrativa
             ViewBag.Asientos = ReglasReserva.EstadoAsientos(db, vuelo);
 
-            // Pasajeros con asiento vigente en el vuelo (solo visible para el personal administrativo)
+            // Pasajeros con asiento vigente en el vuelo
             var estados = new[] { "PENDIENTE", "CONFIRMADA" };
             int vueloId = vuelo.VueloId;
             ViewBag.Asignaciones = db.ReservaPasajeroVuelo.Include("Pasajero").Include("Reserva")
@@ -94,8 +94,6 @@ namespace AerolineaVIP.Controllers
         }
 
         // POST: Vuelos/Create
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que quiere enlazarse. Para obtener 
-        // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SuperUsuario,Administrador")]
@@ -114,10 +112,9 @@ namespace AerolineaVIP.Controllers
                     db.SaveChanges();
                     return RedirectToAction("Index");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
-                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                    ModelState.AddModelError("", "No se pudo guardar. Verifique los datos e inténtelo nuevamente.");
                 }
             }
 
@@ -147,8 +144,6 @@ namespace AerolineaVIP.Controllers
         }
 
         // POST: Vuelos/Edit/5
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que quiere enlazarse. Para obtener 
-        // más detalles, vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SuperUsuario,Administrador")]
@@ -167,10 +162,9 @@ namespace AerolineaVIP.Controllers
                     db.SaveChanges();
                     return RedirectToAction("Index");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Los triggers y restricciones de la base devuelven el motivo del rechazo
-                    ModelState.AddModelError("", "No se pudo guardar: " + ex.GetBaseException().Message);
+                    ModelState.AddModelError("", "No se pudo guardar. Verifique los datos e inténtelo nuevamente.");
                 }
             }
             ViewBag.AeronaveId = new SelectList(db.Aeronave, "AeronaveId", "Matricula", vuelo.AeronaveId);
@@ -202,6 +196,10 @@ namespace AerolineaVIP.Controllers
         public ActionResult DeleteConfirmed(int id)
         {
             Vuelo vuelo = db.Vuelo.Find(id);
+            if (vuelo == null)
+            {
+                return HttpNotFound();
+            }
             db.Vuelo.Remove(vuelo);
             try
             {
@@ -215,11 +213,7 @@ namespace AerolineaVIP.Controllers
             return RedirectToAction("Index");
         }
 
-        // ===================================================================================
-        // PANTALLAS PÚBLICAS: búsqueda (5), resultados (6) y disponibilidad de asientos (7)
-        // ===================================================================================
-
-        // GET: Vuelos/Buscar
+        // Búsqueda de vuelos
         public ActionResult Buscar(int? origenId, int? destinoId, DateTime? fecha, int? pasajeros)
         {
             var model = new BusquedaVuelosViewModel
@@ -233,7 +227,6 @@ namespace AerolineaVIP.Controllers
             return View(model);
         }
 
-        // GET: Vuelos/Resultados?OrigenId=1&DestinoId=2&Fecha=2026-11-03&Pasajeros=2
         public ActionResult Resultados(BusquedaVuelosViewModel model)
         {
             if (model.OrigenId != null && model.OrigenId == model.DestinoId)
@@ -256,7 +249,13 @@ namespace AerolineaVIP.Controllers
             int origenId = model.OrigenId.Value;
             int destinoId = model.DestinoId.Value;
 
-            var vuelos = ReglasReserva.VuelosConDetalle(db).Where(v => v.FechaOperacion == fechaVuelo).ToList();
+            int diaSemana = ((int)fechaVuelo.DayOfWeek + 6) % 7 + 1;
+            var vuelos = ReglasReserva.VuelosConDetalle(db)
+                .Where(v => v.FechaOperacion == fechaVuelo
+                    && v.Frecuencia.DiaSemana == diaSemana
+                    && v.Frecuencia.Activa && v.Frecuencia.Ruta.Activa
+                    && v.Frecuencia.Ruta.Aeropuerto.Activo && v.Frecuencia.Ruta.Aeropuerto1.Activo)
+                .ToList();
             var ocupados = ReglasReserva.OcupadosPorVuelo(db, vuelos.Select(v => v.VueloId).ToList());
             var opciones = new List<OpcionVueloViewModel>();
 
@@ -268,7 +267,7 @@ namespace AerolineaVIP.Controllers
                 opciones.Add(CrearOpcion(new List<Vuelo> { vuelo }, ocupados, model.Pasajeros));
             }
 
-            // Itinerarios con escala (DP-09 y DP-10): tramos contiguos de un mismo itinerario
+            // Itinerarios con escala
             var tramos = db.TramoItinerario
                 .Where(t => t.Itinerario.EstadoItinerarioCodigo == "ACTIVO" && t.Vuelo.FechaOperacion == fechaVuelo)
                 .Select(t => new { t.ItinerarioId, t.Orden, t.VueloId })
@@ -306,7 +305,7 @@ namespace AerolineaVIP.Controllers
                 }
             }
 
-            // Filtro opcional de horario (según la salida del primer tramo)
+            // Filtro opcional de horario
             if (model.Horario == "Manana")
             {
                 opciones = opciones.Where(o => o.Tramos[0].HoraSalida.Hours < 12).ToList();
@@ -335,7 +334,6 @@ namespace AerolineaVIP.Controllers
             return View(resultado);
         }
 
-        // GET: Vuelos/Disponibilidad/31?pasajeros=2&vuelos=31,32
         public ActionResult Disponibilidad(int? id, int? pasajeros, string vuelos)
         {
             if (id == null)
@@ -364,6 +362,47 @@ namespace AerolineaVIP.Controllers
             model.Asientos = ReglasReserva.EstadoAsientos(db, vuelo);
             model.Mensaje = ReglasReserva.MotivoNoReservable(vuelo, model.Vuelo.Disponibles, model.Pasajeros);
 
+            if (model.Mensaje == null && !string.IsNullOrWhiteSpace(vuelos))
+            {
+                var ids = new List<int>();
+                foreach (var parte in vuelos.Split(','))
+                {
+                    int vueloId;
+                    if (!int.TryParse(parte, out vueloId) || ids.Contains(vueloId))
+                    {
+                        model.Mensaje = "El itinerario seleccionado no es válido.";
+                        break;
+                    }
+                    ids.Add(vueloId);
+                }
+                if (model.Mensaje == null)
+                {
+                    var seleccionados = ReglasReserva.VuelosConDetalle(db)
+                        .Where(v => ids.Contains(v.VueloId)).ToList();
+                    var ordenados = ids.Select(vueloId => seleccionados.FirstOrDefault(v => v.VueloId == vueloId)).ToList();
+                    if (ids.Count == 0 || ids[0] != id.Value || ordenados.Any(v => v == null)
+                        || ReglasReserva.ValidarSecuencia(ordenados) != null
+                        || !ReglasReserva.ItinerarioRegistrado(db, ids))
+                    {
+                        model.Mensaje = "El itinerario seleccionado no es válido.";
+                    }
+                    else
+                    {
+                        var ocupacion = ReglasReserva.OcupadosPorVuelo(db, ids);
+                        foreach (var tramo in ordenados)
+                        {
+                            var razon = ReglasReserva.MotivoNoReservable(tramo,
+                                ReglasReserva.CrearTramo(tramo, ocupacion).Disponibles, model.Pasajeros);
+                            if (razon != null)
+                            {
+                                model.Mensaje = razon;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             if (model.Mensaje == null && string.IsNullOrEmpty(vuelos) && !ReglasReserva.VentaIndividualPermitida(vuelo))
             {
                 model.Mensaje = "Este tramo se vende únicamente como parte del itinerario a Galápagos.";
@@ -372,7 +411,7 @@ namespace AerolineaVIP.Controllers
             return View(model);
         }
 
-        // GET: Vuelos/DestinosPorOrigen?origenId=1 (usado por jQuery para filtrar el destino)
+        // Filtra los destinos disponibles según el aeropuerto de origen
         public JsonResult DestinosPorOrigen(int origenId)
         {
             var destinos = ObtenerParesRuta()
@@ -390,8 +429,6 @@ namespace AerolineaVIP.Controllers
             return Json(lista, JsonRequestBehavior.AllowGet);
         }
 
-        // ----- Métodos auxiliares de las pantallas públicas -----
-
         private OpcionVueloViewModel CrearOpcion(List<Vuelo> tramos, Dictionary<int, int> ocupados, int pasajeros)
         {
             var opcion = new OpcionVueloViewModel();
@@ -408,7 +445,7 @@ namespace AerolineaVIP.Controllers
             return opcion;
         }
 
-        // Pares origen-destino que se pueden buscar: rutas directas activas y tramos contiguos de itinerarios activos
+        // Rutas directas y conexiones permitidas
         private List<Tuple<int, int>> ObtenerParesRuta()
         {
             var pares = db.Ruta
@@ -526,11 +563,6 @@ namespace AerolineaVIP.Controllers
             return "No hay vuelos para los criterios seleccionados.";
         }
 
-        // ===================================================================================
-        // PANTALLA 18: generación de vuelos, conflictos de aeronave y validación de asignaciones
-        // ===================================================================================
-
-        // POST: Vuelos/Generar  (ejecuta usp_GenerarVuelos para el rango; solo días autorizados)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SuperUsuario,Administrador")]
@@ -558,14 +590,13 @@ namespace AerolineaVIP.Controllers
                     ? "No se generaron vuelos nuevos: ya existían para ese rango."
                     : "Se generaron " + generados + " vuelos. Asígneles una aeronave para poder comercializarlos.";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["Error"] = "No se pudieron generar los vuelos: " + ex.GetBaseException().Message;
+                TempData["Error"] = "No se pudieron generar los vuelos. Revise la configuración y el rango solicitado.";
             }
             return RedirectToAction("Index", new { desde = desdeGenerar.Value.ToString("yyyy-MM-dd"), hasta = hastaGenerar.Value.ToString("yyyy-MM-dd") });
         }
 
-        // GET: Vuelos/Conflictos  (aeronaves con intervalos operativos incompatibles, DP-03)
         [Authorize(Roles = "SuperUsuario,Administrador")]
         public ActionResult Conflictos()
         {
@@ -598,7 +629,7 @@ namespace AerolineaVIP.Controllers
             return View(conflictos);
         }
 
-        // DP-03: margen de preparación antes de la salida y después de la llegada (minutos)
+        // Margen de preparación de la aeronave antes y después de cada vuelo
         private const int MinutosMargen = 30;
 
         private bool IntervalosIncompatibles(Vuelo a, Vuelo b)
@@ -607,7 +638,7 @@ namespace AerolineaVIP.Controllers
             var finA = ReglasReserva.Llegada(a).AddMinutes(MinutosMargen);
             var inicioB = ReglasReserva.Salida(b).AddMinutes(-MinutosMargen);
             var finB = ReglasReserva.Llegada(b).AddMinutes(MinutosMargen);
-            return inicioA < finB && inicioB < finA;   // RG-03 (fin exclusivo)
+            return inicioA < finB && inicioB < finA;
         }
 
         private string DescribirVuelo(Vuelo v)
@@ -617,7 +648,7 @@ namespace AerolineaVIP.Controllers
                 + v.Frecuencia.HoraSalida.ToString("hh\\:mm") + "–" + v.Frecuencia.HoraLlegada.ToString("hh\\:mm");
         }
 
-        // Validación del servicio al asignar una aeronave (complementa el trigger trg_Vuelo_Validar)
+        // Verifica posibles conflictos antes de asignar una aeronave
         private string ValidarAsignacion(Vuelo vuelo)
         {
             if (vuelo.AeronaveId == null || vuelo.EstadoVueloCodigo == "CANCELADO")

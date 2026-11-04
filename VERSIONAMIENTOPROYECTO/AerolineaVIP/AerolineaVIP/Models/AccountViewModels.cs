@@ -54,13 +54,6 @@ namespace AerolineaVIP.Models
         [Display(Name = "Nombre de usuario o correo")]
         public string UserName { get; set; }
 
-        /*****************
-        [Required]
-        [Display(Name = "Correo electrónico")]
-        [EmailAddress]
-        public string Email { get; set; }
-        *********/
-
         [Required(ErrorMessage = "Ingrese su contraseña.")]
         [DataType(DataType.Password)]
         [Display(Name = "Contraseña")]
@@ -151,22 +144,24 @@ namespace AerolineaVIP.Models
         public string Email { get; set; }
 
         [Required]
-        [StringLength(100, ErrorMessage = "El número de caracteres de {0} debe ser al menos {2}.", MinimumLength = 3)]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres.")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", ErrorMessage = "Incluya una mayúscula, una minúscula y un número.")]
         [DataType(DataType.Password)]
         [Display(Name = "Contraseña")]
         public string Password { get; set; }
 
+        [Required(ErrorMessage = "Confirme la contraseña.")]
         [DataType(DataType.Password)]
         [Display(Name = "Confirmar contraseña")]
         [Compare("Password", ErrorMessage = "La contraseña y la contraseña de confirmación no coinciden.")]
         public string ConfirmPassword { get; set; }
 
+        [Required(ErrorMessage = "El enlace de recuperación no es válido.")]
         public string Code { get; set; }
     }
 
     public class ForgotPasswordViewModel
     {
-        // Pantalla 4: se acepta el correo o el nombre de usuario
         [Required(ErrorMessage = "Ingrese su correo o nombre de usuario.")]
         [StringLength(256)]
         [Display(Name = "Correo o nombre de usuario")]

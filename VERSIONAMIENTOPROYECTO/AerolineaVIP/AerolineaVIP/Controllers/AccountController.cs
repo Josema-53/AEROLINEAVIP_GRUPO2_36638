@@ -22,7 +22,7 @@ namespace AerolineaVIP.Controllers
         {
         }
 
-        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
+        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager)
         {
             UserManager = userManager;
             SignInManager = signInManager;
@@ -34,9 +34,9 @@ namespace AerolineaVIP.Controllers
             {
                 return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
-            private set 
-            { 
-                _signInManager = value; 
+            private set
+            {
+                _signInManager = value;
             }
         }
 
@@ -78,8 +78,6 @@ namespace AerolineaVIP.Controllers
                 return View(model);
             }
 
-            // No cuenta los errores de inicio de sesión para el bloqueo de la cuenta
-            // Para permitir que los errores de contraseña desencadenen el bloqueo de la cuenta, cambie a shouldLockout: true
             // Se permite ingresar con el nombre de usuario o con el correo
             var nombreUsuario = model.UserName.Trim();
             if (nombreUsuario.Contains("@"))
@@ -91,7 +89,7 @@ namespace AerolineaVIP.Controllers
                 }
             }
 
-            var result = await SignInManager.PasswordSignInAsync(nombreUsuario, model.Password, model.RememberMe, shouldLockout: false);
+            var result = await SignInManager.PasswordSignInAsync(nombreUsuario, model.Password, model.RememberMe, shouldLockout: true);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -125,7 +123,6 @@ namespace AerolineaVIP.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> VerifyCode(string provider, string returnUrl, bool rememberMe)
         {
-            // Requerir que el usuario haya iniciado sesión con nombre de usuario y contraseña o inicio de sesión externo
             if (!await SignInManager.HasBeenVerifiedAsync())
             {
                 return View("Error");
@@ -145,11 +142,7 @@ namespace AerolineaVIP.Controllers
                 return View(model);
             }
 
-            // El código siguiente protege de los ataques por fuerza bruta a los códigos de dos factores. 
-            // Si un usuario introduce códigos incorrectos durante un intervalo especificado de tiempo, la cuenta del usuario 
-            // se bloqueará durante un período de tiempo especificado. 
-            // Puede configurar el bloqueo de la cuenta en IdentityConfig
-            var result = await SignInManager.TwoFactorSignInAsync(model.Provider, model.Code, isPersistent:  model.RememberMe, rememberBrowser: model.RememberBrowser);
+            var result = await SignInManager.TwoFactorSignInAsync(model.Provider, model.Code, isPersistent: model.RememberMe, rememberBrowser: model.RememberBrowser);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -189,7 +182,7 @@ namespace AerolineaVIP.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // El rol se decide en el servidor: el registro público nunca asigna roles elevados
+            // El registro público solo permite crear cuentas de cliente
             string rol = "Cliente";
             string[] rolesPermitidos = { "Cliente", "Counter", "Administrador", "SuperUsuario" };
             if (User.IsInRole("SuperUsuario") && rolesPermitidos.Contains(model.Rol))
@@ -214,19 +207,11 @@ namespace AerolineaVIP.Controllers
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    var roleResult = await UserManager.AddToRoleAsync(user.Id, rol);
-                    if (!roleResult.Succeeded)
+                    await UserManager.AddToRoleAsync(user.Id, rol);
+
+                    if (User.IsInRole("SuperUsuario"))
                     {
-                        AddErrors(roleResult);
-                        var deleteResult = await UserManager.DeleteAsync(user);
-                        if (!deleteResult.Succeeded)
-                        {
-                            AddErrors(deleteResult);
-                        }
-                    }
-                    else if (User.IsInRole("SuperUsuario"))
-                    {
-                        // El SuperUsuario crea la cuenta sin cerrar su propia sesión
+                        // Conserva la sesión del administrador al crear otra cuenta
                         TempData["Mensaje"] = "Cuenta " + user.UserName + " creada correctamente con el rol " + rol + ".";
                         return RedirectToAction("Register");
                     }
@@ -242,12 +227,10 @@ namespace AerolineaVIP.Controllers
                 }
             }
 
-            // Si llegamos a este punto, es que se ha producido un error y volvemos a mostrar el formulario
             CargarRoles(rol);
             return View(model);
         }
 
-        // Lista de roles del formulario de registro: el visitante solo ve "Cliente"
         private void CargarRoles(string seleccionado)
         {
             if (User.IsInRole("SuperUsuario"))
@@ -293,7 +276,7 @@ namespace AerolineaVIP.Controllers
                 return View(model);
             }
 
-            // Límite: una solicitud por minuto en la misma sesión
+            // Limita las solicitudes de recuperación dentro de la misma sesión
             if (Session["UltimaRecuperacion"] != null && (DateTime.Now - (DateTime)Session["UltimaRecuperacion"]).TotalSeconds < 60)
             {
                 ModelState.AddModelError("", "Ya se registró una solicitud. Espere un minuto antes de intentar nuevamente.");
@@ -303,22 +286,25 @@ namespace AerolineaVIP.Controllers
 
             string dato = model.Email.Trim();
             var user = dato.Contains("@") ? await UserManager.FindByEmailAsync(dato) : await UserManager.FindByNameAsync(dato);
-            if (user != null)
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 try
                 {
-                    // Se genera el token de restablecimiento, pero no se muestra en pantalla.
-                    // El envío real del correo queda fuera del alcance de esta entrega.
                     string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
+                    string enlace = Url.Action("ResetPassword", "Account",
+                        new { code = code, email = user.Email }, Request.Url.Scheme);
+                    string mensaje = "Para restablecer su contraseña, abra este enlace: <a href=\""
+                        + HttpUtility.HtmlAttributeEncode(enlace) + "\">Restablecer contraseña</a>.";
+                    await UserManager.SendEmailAsync(user.Id, "Recuperación de contraseña - Aerolínea VIP", mensaje);
                 }
                 catch (Exception)
                 {
-                    // No se revela ningún detalle al usuario
+                    ModelState.AddModelError("", "No se pudo completar el envío. Consulte con el administrador del sistema.");
+                    return View(model);
                 }
             }
 
-            // Mensaje neutral: no indica si la cuenta existe o no
-            ViewBag.Mensaje = "Si los datos corresponden a una cuenta registrada, recibirá las instrucciones para recuperar el acceso.";
+            ViewBag.Mensaje = "Si la cuenta está registrada y tiene correo configurado, recibirá las instrucciones para recuperar el acceso.";
             ModelState.Clear();
             return View(new ForgotPasswordViewModel());
         }
@@ -334,9 +320,13 @@ namespace AerolineaVIP.Controllers
         //
         // GET: /Account/ResetPassword
         [AllowAnonymous]
-        public ActionResult ResetPassword(string code)
+        public ActionResult ResetPassword(string code, string email)
         {
-            return code == null ? View("Error") : View();
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return View("Error");
+            }
+            return View(new ResetPasswordViewModel { Code = code, Email = email });
         }
 
         //
@@ -350,10 +340,9 @@ namespace AerolineaVIP.Controllers
             {
                 return View(model);
             }
-            var user = await UserManager.FindByNameAsync(model.Email);
+            var user = await UserManager.FindByEmailAsync(model.Email.Trim());
             if (user == null)
             {
-                // No revelar que el usuario no existe
                 return RedirectToAction("ResetPasswordConfirmation", "Account");
             }
             var result = await UserManager.ResetPasswordAsync(user.Id, model.Code, model.Password);
@@ -362,7 +351,7 @@ namespace AerolineaVIP.Controllers
                 return RedirectToAction("ResetPasswordConfirmation", "Account");
             }
             AddErrors(result);
-            return View();
+            return View(model);
         }
 
         //
@@ -380,7 +369,6 @@ namespace AerolineaVIP.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult ExternalLogin(string provider, string returnUrl)
         {
-            // Solicitar redireccionamiento al proveedor de inicio de sesión externo
             return new ChallengeResult(provider, Url.Action("ExternalLoginCallback", "Account", new { ReturnUrl = returnUrl }));
         }
 
@@ -411,7 +399,6 @@ namespace AerolineaVIP.Controllers
                 return View();
             }
 
-            // Generar el token y enviarlo
             if (!await SignInManager.SendTwoFactorCodeAsync(model.SelectedProvider))
             {
                 return View("Error");
@@ -430,7 +417,6 @@ namespace AerolineaVIP.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Si el usuario ya tiene un inicio de sesión, iniciar sesión del usuario con este proveedor de inicio de sesión externo
             var result = await SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
             switch (result)
             {
@@ -442,7 +428,6 @@ namespace AerolineaVIP.Controllers
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = false });
                 case SignInStatus.Failure:
                 default:
-                    // Si el usuario no tiene ninguna cuenta, solicitar que cree una
                     ViewBag.ReturnUrl = returnUrl;
                     ViewBag.LoginProvider = loginInfo.Login.LoginProvider;
                     return View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel { Email = loginInfo.Email });
@@ -463,7 +448,6 @@ namespace AerolineaVIP.Controllers
 
             if (ModelState.IsValid)
             {
-                // Obtener datos del usuario del proveedor de inicio de sesión externo
                 var info = await AuthenticationManager.GetExternalLoginInfoAsync();
                 if (info == null)
                 {
@@ -473,12 +457,17 @@ namespace AerolineaVIP.Controllers
                 var result = await UserManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
-                    result = await UserManager.AddLoginAsync(user.Id, info.Login);
+                    result = await UserManager.AddToRoleAsync(user.Id, "Cliente");
                     if (result.Succeeded)
                     {
-                        await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-                        return RedirectToLocal(returnUrl);
+                        result = await UserManager.AddLoginAsync(user.Id, info.Login);
+                        if (result.Succeeded)
+                        {
+                            await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                            return RedirectToLocal(returnUrl);
+                        }
                     }
+                    await UserManager.DeleteAsync(user);
                 }
                 AddErrors(result);
             }
@@ -526,7 +515,7 @@ namespace AerolineaVIP.Controllers
         }
 
         #region Aplicaciones auxiliares
-        // Se usa para la protección XSRF al agregar inicios de sesión externos
+        // Protección del inicio de sesión externo
         private const string XsrfKey = "XsrfId";
 
         private IAuthenticationManager AuthenticationManager
