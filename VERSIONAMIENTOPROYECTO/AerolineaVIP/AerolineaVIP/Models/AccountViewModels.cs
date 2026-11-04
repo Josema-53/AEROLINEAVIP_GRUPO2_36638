@@ -117,6 +117,32 @@ namespace AerolineaVIP.Models
         public bool AceptaCondiciones { get; set; }
     }
 
+    public class EditarUsuarioViewModel
+    {
+        public string Id { get; set; }
+
+        [Display(Name = "Nombre de usuario")]
+        public string UserName { get; set; }
+
+        [Required(ErrorMessage = "Ingrese sus nombres.")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Los nombres deben tener entre 2 y 100 caracteres.")]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ]+$", ErrorMessage = "Los nombres solo pueden contener letras y espacios.")]
+        [Display(Name = "Nombres")]
+        public string Nombres { get; set; }
+
+        [Required(ErrorMessage = "Ingrese sus apellidos.")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Los apellidos deben tener entre 2 y 100 caracteres.")]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ]+$", ErrorMessage = "Los apellidos solo pueden contener letras y espacios.")]
+        [Display(Name = "Apellidos")]
+        public string Apellidos { get; set; }
+
+        [Required(ErrorMessage = "Ingrese su correo electrónico.")]
+        [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
+        [StringLength(256)]
+        [Display(Name = "Correo electrónico")]
+        public string Email { get; set; }
+    }
+
     public class ResetPasswordViewModel
     {
         [Required]

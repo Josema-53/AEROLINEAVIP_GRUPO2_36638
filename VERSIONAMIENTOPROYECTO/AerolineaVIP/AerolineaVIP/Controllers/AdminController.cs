@@ -65,6 +65,120 @@ namespace AerolineaVIP.Controllers
             }
         }
 
+        [Authorize(Roles = "SuperUsuario")]
+        public ActionResult EditarUsuario(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return new HttpStatusCodeResult(System.Net.HttpStatusCode.BadRequest);
+            }
+
+            using (var identidad = new ApplicationDbContext())
+            {
+                var userManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(identidad));
+                var usuario = userManager.FindById(id);
+                if (usuario == null)
+                {
+                    return HttpNotFound();
+                }
+
+                return View(new EditarUsuarioViewModel
+                {
+                    Id = usuario.Id,
+                    UserName = usuario.UserName,
+                    Nombres = usuario.Nombres,
+                    Apellidos = usuario.Apellidos,
+                    Email = usuario.Email
+                });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario")]
+        public ActionResult EditarUsuario(EditarUsuarioViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            using (var identidad = new ApplicationDbContext())
+            {
+                var userManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(identidad));
+                var usuario = userManager.FindById(model.Id);
+                if (usuario == null)
+                {
+                    return HttpNotFound();
+                }
+
+                usuario.Nombres = model.Nombres.Trim();
+                usuario.Apellidos = model.Apellidos.Trim();
+                usuario.Email = model.Email.Trim();
+                var resultado = userManager.Update(usuario);
+                if (!resultado.Succeeded)
+                {
+                    foreach (var error in resultado.Errors)
+                    {
+                        ModelState.AddModelError("", error);
+                    }
+                    return View(model);
+                }
+            }
+
+            TempData["Mensaje"] = "Se actualizaron los datos del usuario.";
+            return RedirectToAction("Usuarios");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "SuperUsuario")]
+        public ActionResult EliminarUsuario(string usuarioId)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioId) || usuarioId == User.Identity.GetUserId())
+            {
+                TempData["Error"] = "No puede eliminar su propia cuenta o la solicitud no es válida.";
+                return RedirectToAction("Usuarios");
+            }
+
+            if (db.Reserva.Any(r => r.UsuarioId == usuarioId))
+            {
+                TempData["Error"] = "No se puede eliminar esta cuenta porque tiene reservas asociadas. Se conserva para mantener el historial.";
+                return RedirectToAction("Usuarios");
+            }
+
+            using (var identidad = new ApplicationDbContext())
+            {
+                var userManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(identidad));
+                var usuario = userManager.FindById(usuarioId);
+                if (usuario == null)
+                {
+                    TempData["Error"] = "No se encontró el usuario.";
+                    return RedirectToAction("Usuarios");
+                }
+
+                var rolSuperUsuario = identidad.Roles.FirstOrDefault(r => r.Name == "SuperUsuario");
+                int cantidadSuperUsuarios = rolSuperUsuario == null ? 0
+                    : identidad.Users.Count(u => u.Roles.Any(r => r.RoleId == rolSuperUsuario.Id));
+                if (rolSuperUsuario != null && userManager.IsInRole(usuarioId, "SuperUsuario")
+                    && cantidadSuperUsuarios <= 1)
+                {
+                    TempData["Error"] = "Debe existir al menos un usuario con el rol SuperUsuario.";
+                    return RedirectToAction("Usuarios");
+                }
+
+                var resultado = userManager.Delete(usuario);
+                if (!resultado.Succeeded)
+                {
+                    TempData["Error"] = "No se pudo eliminar la cuenta: " + string.Join(" | ", resultado.Errors);
+                    return RedirectToAction("Usuarios");
+                }
+            }
+
+            TempData["Mensaje"] = "Se eliminó la cuenta seleccionada.";
+            return RedirectToAction("Usuarios");
+        }
+
         // POST: Admin/AsignarRol  (solo el SuperUsuario asigna roles)
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -92,13 +206,45 @@ namespace AerolineaVIP.Controllers
                     TempData["Error"] = "No se encontró el usuario.";
                     return RedirectToAction("Usuarios");
                 }
+                if (!identidad.Roles.Any(r => r.Name == rol))
+                {
+                    TempData["Error"] = "El rol seleccionado no existe.";
+                    return RedirectToAction("Usuarios");
+                }
+                var rolSuperUsuario = identidad.Roles.FirstOrDefault(r => r.Name == "SuperUsuario");
+                int cantidadSuperUsuarios = rolSuperUsuario == null ? 0
+                    : identidad.Users.Count(u => u.Roles.Any(r => r.RoleId == rolSuperUsuario.Id));
+                if (rolSuperUsuario != null && usermanager.IsInRole(usuarioId, "SuperUsuario") && rol != "SuperUsuario"
+                    && cantidadSuperUsuarios <= 1)
+                {
+                    TempData["Error"] = "Debe existir al menos un usuario con el rol SuperUsuario.";
+                    return RedirectToAction("Usuarios");
+                }
 
                 // Cada usuario tiene un único rol: se quitan los anteriores y se asigna el nuevo
-                foreach (var anterior in usermanager.GetRoles(usuarioId).ToList())
+                using (var transaccion = identidad.Database.BeginTransaction())
                 {
-                    usermanager.RemoveFromRole(usuarioId, anterior);
+                    foreach (var anterior in usermanager.GetRoles(usuarioId).ToList())
+                    {
+                        var quitado = usermanager.RemoveFromRole(usuarioId, anterior);
+                        if (!quitado.Succeeded)
+                        {
+                            transaccion.Rollback();
+                            TempData["Error"] = "No se pudo quitar el rol anterior: " + string.Join(" | ", quitado.Errors);
+                            return RedirectToAction("Usuarios");
+                        }
+                    }
+
+                    var asignado = usermanager.AddToRole(usuarioId, rol);
+                    if (!asignado.Succeeded)
+                    {
+                        transaccion.Rollback();
+                        TempData["Error"] = "No se pudo asignar el rol: " + string.Join(" | ", asignado.Errors);
+                        return RedirectToAction("Usuarios");
+                    }
+
+                    transaccion.Commit();
                 }
-                usermanager.AddToRole(usuarioId, rol);
                 TempData["Mensaje"] = "Se asignó el rol " + rol + " a " + usuario.UserName + ".";
             }
             return RedirectToAction("Usuarios");

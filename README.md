@@ -46,7 +46,7 @@ AerolineaVIP/                     Proyecto web
 | Counter | `counter01` | `Counter123` |
 | Cliente | `cliente01` … `cliente05` | `Cliente123` |
 
-El login acepta nombre de usuario o correo. El registro público siempre crea un **Cliente**. Solo el SuperUsuario puede crear cuentas con otro rol (Administración → Crear cuenta de usuario) o cambiar roles (Administración → Usuarios).
+El login acepta nombre de usuario o correo. El registro público siempre crea un **Cliente**. Solo el SuperUsuario puede crear cuentas con otro rol (Administración → Crear cuenta de usuario), cambiar roles y editar o eliminar usuarios (Administración → Usuarios). Las cuentas con reservas asociadas no se eliminan para conservar el historial; la base de Identity no tiene una clave foránea directa hacia la base de dominio.
 
 ## Correspondencia con los 12 entregables del ZIP
 

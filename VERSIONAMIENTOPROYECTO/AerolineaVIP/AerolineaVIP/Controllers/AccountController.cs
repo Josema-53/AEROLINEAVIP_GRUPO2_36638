@@ -214,19 +214,32 @@ namespace AerolineaVIP.Controllers
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await UserManager.AddToRoleAsync(user.Id, rol);
-
-                    if (User.IsInRole("SuperUsuario"))
+                    var roleResult = await UserManager.AddToRoleAsync(user.Id, rol);
+                    if (!roleResult.Succeeded)
+                    {
+                        AddErrors(roleResult);
+                        var deleteResult = await UserManager.DeleteAsync(user);
+                        if (!deleteResult.Succeeded)
+                        {
+                            AddErrors(deleteResult);
+                        }
+                    }
+                    else if (User.IsInRole("SuperUsuario"))
                     {
                         // El SuperUsuario crea la cuenta sin cerrar su propia sesión
                         TempData["Mensaje"] = "Cuenta " + user.UserName + " creada correctamente con el rol " + rol + ".";
                         return RedirectToAction("Register");
                     }
-
-                    await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-                    return RedirectToAction("Index", "Home");
+                    else
+                    {
+                        await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                        return RedirectToAction("Index", "Home");
+                    }
                 }
-                AddErrors(result);
+                else
+                {
+                    AddErrors(result);
+                }
             }
 
             // Si llegamos a este punto, es que se ha producido un error y volvemos a mostrar el formulario

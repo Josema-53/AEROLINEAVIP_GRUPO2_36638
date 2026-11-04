@@ -59,6 +59,7 @@ else
         @if (esSuperUsuario)
         {
             <th>Asignar rol</th>
+            <th>Acciones</th>
         }
     </tr>
     @foreach (var u in Model)
@@ -83,6 +84,15 @@ else
                             }
                         </select>
                         <button type="submit" class="btn btn-sm btn-outline-dark">Asignar</button>
+                    }
+                </td>
+                <td class="text-nowrap">
+                    @Html.ActionLink("Editar", "EditarUsuario", new { id = u[0] }, new { @class = "btn btn-sm btn-outline-primary" })
+                    @using (Html.BeginForm("EliminarUsuario", "Admin", FormMethod.Post, new { @class = "d-inline" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="usuarioId" value="@u[0]" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta cuenta? Las cuentas con reservas no se pueden eliminar.');">Eliminar</button>
                     }
                 </td>
             }
