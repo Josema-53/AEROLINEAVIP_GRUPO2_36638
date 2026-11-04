@@ -177,6 +177,7 @@
     <Compile Include="Controllers\CheckInController.cs" />
     <Compile Include="Controllers\ComprasController.cs" />
     <Compile Include="Controllers\ComprobantesController.cs" />
+    <Compile Include="Controllers\CounterController.cs" />
     <Compile Include="Controllers\DatosEmisoresController.cs" />
     <Compile Include="Controllers\FrecuenciasController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -210,6 +211,7 @@
       <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\ComprasViewModels.cs" />
+    <Compile Include="Models\CounterViewModels.cs" />
     <Compile Include="Models\Comprobante.cs">
       <DependentUpon>Model_AerolineasVIP.tt</DependentUpon>
     </Compile>
@@ -537,6 +539,8 @@
     <Content Include="Views\Comprobantes\Imprimir.cshtml" />
     <Content Include="Views\Comprobantes\Index.cshtml" />
     <Content Include="Views\CheckIn\Index.cshtml" />
+    <Content Include="Views\Counter\Index.cshtml" />
+    <Content Include="Views\Counter\web.config" />
     <Content Include="Views\Admin\EditarUsuario.cshtml" />
   </ItemGroup>
   <ItemGroup>

@@ -25,8 +25,9 @@
                     {
                         <li>@Html.ActionLink("Mi cuenta", "MisReservas", "Reservas", new { area = "" }, new { @class = "nav-link" })</li>
                     }
-                    @if (User.IsInRole("Counter"))
+                    @if (User.IsInRole("Counter") || User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))
                     {
+                        <li>@Html.ActionLink("Atención Counter", "Index", "Counter", new { area = "" }, new { @class = "nav-link" })</li>
                         <li>@Html.ActionLink("Check-in", "Index", "CheckIn", new { area = "" }, new { @class = "nav-link" })</li>
                     }
                     @if (User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))

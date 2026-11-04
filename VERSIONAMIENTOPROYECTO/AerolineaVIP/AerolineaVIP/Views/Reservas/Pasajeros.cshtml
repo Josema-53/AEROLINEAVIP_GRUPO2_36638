@@ -44,7 +44,7 @@
                             </div>
                             <div class="col-md-4 mb-2">
                                 @Html.LabelFor(m => m.Pasajeros[i].FechaNacimiento, new { @class = "form-label" }) (opcional)
-                                @Html.TextBoxFor(m => m.Pasajeros[i].FechaNacimiento, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", max = DateTime.Today.ToString("yyyy-MM-dd") })
+                                @Html.TextBoxFor(m => m.Pasajeros[i].FechaNacimiento, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", min = "1901-01-01", max = DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd") })
                                 @Html.ValidationMessageFor(m => m.Pasajeros[i].FechaNacimiento, "", new { @class = "text-danger" })
                             </div>
                             <div class="col-md-4 mb-2">

@@ -201,9 +201,9 @@ namespace AerolineaVIP.Controllers
             {
                 ModelState.AddModelError("", "Ingrese los nombres y apellidos del pasajero.");
             }
-            if (pasajero.FechaNacimiento.HasValue && (pasajero.FechaNacimiento.Value.Date > DateTime.Today || pasajero.FechaNacimiento.Value.Year <= 1900))
+            if (pasajero.FechaNacimiento.HasValue && (pasajero.FechaNacimiento.Value.Date >= DateTime.Today || pasajero.FechaNacimiento.Value.Year <= 1900))
             {
-                ModelState.AddModelError("FechaNacimiento", "La fecha de nacimiento no es válida.");
+                ModelState.AddModelError("FechaNacimiento", "La fecha de nacimiento debe ser anterior a hoy.");
             }
             if (db.Pasajero.Any(p => p.TipoDocumentoCodigo == pasajero.TipoDocumentoCodigo
                 && p.NumeroDocumento == pasajero.NumeroDocumento && p.PasajeroId != pasajero.PasajeroId))

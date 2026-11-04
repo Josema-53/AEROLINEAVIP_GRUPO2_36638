@@ -342,9 +342,9 @@ namespace AerolineaVIP.Controllers
                 {
                     ModelState.AddModelError(campo, "La cédula debe tener 10 dígitos y ser válida.");
                 }
-                if (p.FechaNacimiento != null && (p.FechaNacimiento.Value.Year <= 1900 || p.FechaNacimiento.Value.Date > DateTime.Today))
+                if (p.FechaNacimiento != null && (p.FechaNacimiento.Value.Year <= 1900 || p.FechaNacimiento.Value.Date >= DateTime.Today))
                 {
-                    ModelState.AddModelError("Pasajeros[" + i + "].FechaNacimiento", "La fecha de nacimiento no es válida.");
+                    ModelState.AddModelError("Pasajeros[" + i + "].FechaNacimiento", "La fecha de nacimiento debe ser anterior a hoy.");
                 }
                 if (lista.Take(i).Any(x => x.TipoDocumentoCodigo == p.TipoDocumentoCodigo && x.NumeroDocumento == p.NumeroDocumento))
                 {

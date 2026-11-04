@@ -1,0 +1,69 @@
+﻿@model AerolineaVIP.Models.CounterAtencionViewModel
+@{
+    ViewBag.Title = "Atención de Counter";
+}
+
+<h2>Atención de Counter</h2>
+<p class="text-muted">Busque la reserva con su código y el documento de uno de sus pasajeros para consultar el itinerario y asistir con cambios de asiento.</p>
+@if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+{
+    <div class="alert alert-info" role="alert">@Model.Mensaje</div>
+}
+<div class="card mb-4">
+    <div class="card-body">
+        @using (Html.BeginForm("Index", "Counter", FormMethod.Get))
+        {
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label for="codigo" class="form-label">Código de reserva *</label>
+                    <input type="text" id="codigo" name="codigo" value="@Model.Codigo" class="form-control" maxlength="10" placeholder="RV00000001" required />
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label for="documento" class="form-label">Documento del pasajero *</label>
+                    <input type="text" id="documento" name="documento" value="@Model.Documento" class="form-control" maxlength="20" required />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-dark">Buscar reserva</button>
+        }
+    </div>
+</div>
+@if (Model.Buscado && !Model.Encontrada)
+{
+    <div class="alert alert-warning" role="alert">@(Model.Mensaje ?? "No se encontró una reserva con esos datos.")</div>
+}
+@if (Model.Encontrada)
+{
+    <h4>Reserva @Model.Codigo</h4>
+    <p>Estado: <strong>@Model.EstadoReserva</strong></p>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Pasajero</th><th>Vuelo</th><th>Ruta</th><th>Salida</th><th>Asiento</th><th>Estado</th><th>Cambio de asiento</th></tr></thead>
+            <tbody>
+                @foreach (var fila in Model.Asignaciones)
+                {
+                    <tr>
+                        <td>@fila.Pasajero</td><td>@fila.Vuelo</td><td>@fila.Ruta</td>
+                        <td>@fila.Salida.ToString("dd/MM/yyyy HH:mm")</td><td>@fila.AsientoActual</td><td>@fila.Estado</td>
+                        <td>
+                            @if (fila.PuedeCambiarAsiento)
+                            {
+                                using (Html.BeginForm("CambiarAsiento", "Counter", FormMethod.Post, new { @class = "d-flex gap-2" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="reservaId" value="@Model.ReservaId" />
+                                    <input type="hidden" name="asignacionId" value="@fila.AsignacionId" />
+                                    <input type="hidden" name="codigo" value="@Model.Codigo" />
+                                    <input type="hidden" name="documento" value="@Model.Documento" />
+                                    @Html.DropDownList("nuevoAsiento", fila.AsientosDisponibles, new { @class = "form-select", aria_label = "Nuevo asiento" })
+                                    <button type="submit" class="btn btn-outline-dark text-nowrap">Cambiar asiento</button>
+                                }
+                            }
+                            else { <span class="text-muted">No disponible para cambio</span> }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <p class="small text-muted">Los cambios se validan nuevamente al guardar y quedan registrados en el log de auditoría de la aplicación.</p>
+}

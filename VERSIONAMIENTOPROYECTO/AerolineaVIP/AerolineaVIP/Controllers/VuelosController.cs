@@ -380,7 +380,7 @@ namespace AerolineaVIP.Controllers
                     var seleccionados = ReglasReserva.VuelosConDetalle(db)
                         .Where(v => ids.Contains(v.VueloId)).ToList();
                     var ordenados = ids.Select(vueloId => seleccionados.FirstOrDefault(v => v.VueloId == vueloId)).ToList();
-                    if (ids.Count == 0 || ids[0] != id.Value || ordenados.Any(v => v == null)
+                    if (ids.Count == 0 || !ids.Contains(id.Value) || ordenados.Any(v => v == null)
                         || ReglasReserva.ValidarSecuencia(ordenados) != null
                         || !ReglasReserva.ItinerarioRegistrado(db, ids))
                     {
